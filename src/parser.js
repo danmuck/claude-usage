@@ -547,4 +547,120 @@ function fmt(n) {
   return n.toLocaleString();
 }
 
-module.exports = { parseAllSessions };
+
+async function calculateStorageMetrics() {
+  const claudeDir = getClaudeDir();
+  if (!fs.existsSync(claudeDir)) {
+    return { total: 0, categories: [], projects: [] };
+  }
+
+  function dirSizeSync(dir) {
+    let size = 0, fileCount = 0;
+    let entries;
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return { size: 0, fileCount: 0 }; }
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        const sub = dirSizeSync(full);
+        size += sub.size;
+        fileCount += sub.fileCount;
+      } else if (entry.isFile()) {
+        try { size += fs.statSync(full).size; fileCount++; } catch {}
+      }
+    }
+    return { size, fileCount };
+  }
+
+  const knownDirs = [
+    'projects', 'debug', 'file-history', 'plugins', 'shell-snapshots',
+    'tasks', 'plans', 'todos', 'cache', 'backups', 'worktrees',
+    'paste-cache', 'session-env', 'downloads', 'telemetry'
+  ];
+
+  const categories = [];
+  let accountedSize = 0;
+  for (const name of knownDirs) {
+    const dirPath = path.join(claudeDir, name);
+    if (fs.existsSync(dirPath)) {
+      const { size, fileCount } = dirSizeSync(dirPath);
+      if (size > 0) {
+        categories.push({ name, size, fileCount });
+        accountedSize += size;
+      }
+    }
+  }
+
+  // Scan root-level files in ~/.claude/ (config, history, etc.)
+  let rootFileSize = 0, rootFileCount = 0;
+  try {
+    const rootEntries = fs.readdirSync(claudeDir, { withFileTypes: true });
+    for (const entry of rootEntries) {
+      if (entry.isFile()) {
+        try {
+          rootFileSize += fs.statSync(path.join(claudeDir, entry.name)).size;
+          rootFileCount++;
+        } catch {}
+      }
+    }
+  } catch {}
+  if (rootFileSize > 0) {
+    categories.push({ name: 'config & history', size: rootFileSize, fileCount: rootFileCount });
+    accountedSize += rootFileSize;
+  }
+
+  // Measure total ~/.claude size
+  const totalInfo = dirSizeSync(claudeDir);
+  const otherSize = totalInfo.size - accountedSize;
+  if (otherSize > 1024) {
+    categories.push({ name: 'other', size: otherSize, fileCount: totalInfo.fileCount - categories.reduce((s, c) => s + c.fileCount, 0) });
+  }
+
+  categories.sort((a, b) => b.size - a.size);
+
+  // Per-project storage breakdown
+  const projects = [];
+  const projectsDir = path.join(claudeDir, 'projects');
+  if (fs.existsSync(projectsDir)) {
+    const dirs = fs.readdirSync(projectsDir).filter(d => {
+      try { return fs.statSync(path.join(projectsDir, d)).isDirectory(); } catch { return false; }
+    });
+    for (const d of dirs) {
+      const { size, fileCount } = dirSizeSync(path.join(projectsDir, d));
+      if (size > 0) {
+        projects.push({ name: d, size, sessionCount: fileCount });
+      }
+    }
+    projects.sort((a, b) => b.size - a.size);
+  }
+
+  // Scan external locations (Desktop app caches, preferences)
+  const home = os.homedir();
+  const externalDefs = [
+    { name: 'Desktop App Updates', path: path.join(home, 'Library/Caches/com.anthropic.claudefordesktop.ShipIt') },
+    { name: 'Desktop App Cache', path: path.join(home, 'Library/Caches/com.anthropic.claudefordesktop') },
+    { name: 'Desktop Preferences', path: path.join(home, 'Library/Preferences/com.anthropic.claudefordesktop.plist') },
+  ];
+
+  const externalLocations = [];
+  for (const ext of externalDefs) {
+    try {
+      const stat = fs.statSync(ext.path);
+      if (stat.isDirectory()) {
+        const info = dirSizeSync(ext.path);
+        if (info.size > 0) {
+          externalLocations.push({ name: ext.name, path: ext.path, size: info.size, fileCount: info.fileCount });
+        }
+      } else if (stat.isFile()) {
+        externalLocations.push({ name: ext.name, path: ext.path, size: stat.size, fileCount: 1 });
+      }
+    } catch {}
+  }
+
+  const cliTotal = totalInfo.size;
+  const externalTotal = externalLocations.reduce((s, e) => s + e.size, 0);
+
+  return { total: cliTotal + externalTotal, cliTotal, categories, projects, externalLocations };
+}
+
+
+module.exports = { parseAllSessions, calculateStorageMetrics };

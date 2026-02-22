@@ -3,35 +3,42 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Claude Spend</title>
+<title>claude.usage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #F8F9FC;
-    --bg-mesh-1: #EEF0FF;
-    --bg-mesh-2: #F0FDFA;
-    --white: #FFFFFF;
-    --text: #0F172A;
-    --text-secondary: #475569;
-    --text-tertiary: #94A3B8;
+    --font-display: 'JetBrains Mono', monospace;
+    --font-body: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    --mono: 'DM Mono', 'SF Mono', 'Cascadia Code', monospace;
+
+    --bg: #FAFAF7;
+    --bg-card: #FFFFFF;
+    --bg-surface: #F5F5F0;
+    --text: #1A1A18;
+    --text-secondary: #52524E;
+    --text-tertiary: #8A8A86;
     --border: rgba(0,0,0,0.06);
     --border-strong: rgba(0,0,0,0.1);
 
+    --accent: #D97706;
+    --accent-light: #FBBF24;
+    --accent-bg: rgba(217,119,6,0.08);
+
     --indigo: #6366F1;
     --violet: #8B5CF6;
-    --purple: #A855F7;
     --teal: #14B8A6;
     --cyan: #06B6D4;
     --emerald: #10B981;
-    --amber: #F59E0B;
+    --amber: #D97706;
     --orange: #F97316;
     --rose: #F43F5E;
     --blue: #3B82F6;
 
-    --gradient-main: linear-gradient(135deg, #6366F1, #8B5CF6, #A855F7);
+    --gradient-main: linear-gradient(135deg, #D97706, #F59E0B);
     --gradient-teal: linear-gradient(135deg, #14B8A6, #06B6D4);
     --gradient-warm: linear-gradient(135deg, #F59E0B, #F97316);
     --gradient-rose: linear-gradient(135deg, #F43F5E, #EC4899);
@@ -39,94 +46,141 @@
     --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
     --shadow-md: 0 4px 16px rgba(0,0,0,0.06);
     --shadow-lg: 0 8px 32px rgba(0,0,0,0.08);
-    --shadow-glow: 0 0 40px rgba(99,102,241,0.15);
 
     --radius: 16px;
     --radius-sm: 10px;
     --radius-xs: 6px;
-    --font: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-    --mono: 'SF Mono', 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
+    --navbar-h: 56px;
+  }
+
+  /* ---- DARK MODE ---- */
+  [data-theme="dark"] {
+    --bg: #111110;
+    --bg-card: #1C1C1A;
+    --bg-surface: #232320;
+    --text: #EEEEE8;
+    --text-secondary: #A3A39E;
+    --text-tertiary: #6B6B66;
+    --border: rgba(255,255,255,0.07);
+    --border-strong: rgba(255,255,255,0.12);
+    --accent-bg: rgba(217,119,6,0.15);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.3);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
   }
 
   body {
-    font-family: var(--font);
+    font-family: var(--font-body);
     background: var(--bg);
     color: var(--text);
     line-height: 1.6;
     min-height: 100vh;
     overflow-x: hidden;
+    transition: background-color 0.3s, color 0.3s;
   }
 
-  /* Mesh gradient background */
-  body::before {
-    content: '';
-    position: fixed; top: 0; left: 0; right: 0; height: 600px;
-    background:
-      radial-gradient(ellipse 80% 60% at 10% 0%, rgba(99,102,241,0.12) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 90% 10%, rgba(139,92,246,0.08) 0%, transparent 50%),
-      radial-gradient(ellipse 50% 40% at 50% 20%, rgba(20,184,166,0.06) 0%, transparent 50%);
-    pointer-events: none; z-index: 0;
-  }
-
-  /* Loading */
+  /* ---- LOADING ---- */
   .loading {
     display: flex; align-items: center; justify-content: center;
     min-height: 100vh; flex-direction: column; gap: 20px;
   }
   .spinner {
     width: 36px; height: 36px;
-    border: 3px solid var(--border); border-top-color: var(--indigo);
+    border: 3px solid var(--border); border-top-color: var(--accent);
     border-radius: 50%; animation: spin 0.7s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   .loading-text { color: var(--text-secondary); font-size: 15px; font-weight: 500; }
 
-  /* Layout */
-  .container { max-width: 1200px; margin: 0 auto; padding: 40px 28px 60px; position: relative; z-index: 1; }
+  /* ---- NAVBAR ---- */
+  .navbar {
+    position: fixed; top: 0; left: 0; right: 0; height: var(--navbar-h);
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    z-index: 1000; display: flex; align-items: center;
+    padding: 0 24px; gap: 8px;
+    transition: background-color 0.3s, border-color 0.3s;
+  }
+  [data-theme="dark"] .navbar {
+    background: rgba(28,28,26,0.85);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  }
+  .nav-brand {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    margin-right: 24px;
+    white-space: nowrap;
+    user-select: none;
+    letter-spacing: -0.3px;
+  }
+  .nav-tabs {
+    display: flex; gap: 2px; position: relative;
+    flex: 1; min-width: 0;
+  }
+  .nav-tab {
+    background: none; border: none; cursor: pointer;
+    font-family: var(--font-body);
+    font-size: 13px; font-weight: 600;
+    color: var(--text-tertiary);
+    padding: 8px 14px; border-radius: 8px;
+    transition: color 0.2s, background 0.2s;
+    white-space: nowrap;
+  }
+  .nav-tab:hover { color: var(--text-secondary); background: var(--bg-surface); }
+  .nav-tab.active { color: var(--accent); }
+  .nav-indicator {
+    position: absolute; bottom: -9px; height: 2px;
+    background: var(--accent); border-radius: 2px;
+    transition: left 0.3s ease, width 0.3s ease;
+  }
+  .nav-right {
+    display: flex; align-items: center; gap: 10px; margin-left: auto;
+  }
+  .date-range {
+    color: var(--text-tertiary); font-size: 12px; font-weight: 500;
+    background: var(--bg-surface); padding: 5px 12px; border-radius: 20px;
+    border: 1px solid var(--border); white-space: nowrap;
+    transition: background-color 0.3s, border-color 0.3s;
+  }
+  .theme-toggle, .refresh-btn {
+    background: var(--bg-surface); border: 1px solid var(--border);
+    color: var(--text-secondary); cursor: pointer;
+    border-radius: 8px; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .theme-toggle { width: 34px; height: 34px; font-size: 16px; padding: 0; }
+  .theme-toggle:hover, .refresh-btn:hover {
+    border-color: var(--accent); color: var(--accent);
+  }
+  .refresh-btn {
+    padding: 6px 12px; gap: 5px; font-size: 12px; font-weight: 600;
+    font-family: var(--font-body);
+  }
+  .refresh-btn svg { width: 13px; height: 13px; }
 
-  /* Fade-in animation */
+  /* ---- LAYOUT ---- */
+  .container {
+    max-width: 1200px; margin: 0 auto;
+    padding: calc(var(--navbar-h) + 28px) 28px 60px;
+    position: relative; z-index: 1;
+  }
+
   @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
+    from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  .animate { animation: fadeUp 0.5s ease-out both; }
+  .animate { animation: fadeUp 0.4s ease-out both; }
   .delay-1 { animation-delay: 0.05s; }
   .delay-2 { animation-delay: 0.1s; }
   .delay-3 { animation-delay: 0.15s; }
   .delay-4 { animation-delay: 0.2s; }
   .delay-5 { animation-delay: 0.25s; }
 
-  /* ---- HEADER ---- */
-  .header {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 40px; flex-wrap: wrap; gap: 16px;
-  }
-  .header-left { display: flex; align-items: center; gap: 14px; }
-  .logo-mark {
-    width: 40px; height: 40px; border-radius: 12px;
-    background: var(--gradient-main);
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 12px rgba(99,102,241,0.3);
-  }
-  .logo-mark svg { width: 22px; height: 22px; }
-  .header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
-  .header-right { display: flex; align-items: center; gap: 14px; }
-  .date-range {
-    color: var(--text-tertiary); font-size: 13px; font-weight: 500;
-    background: var(--white); padding: 6px 14px; border-radius: 20px;
-    border: 1px solid var(--border);
-  }
-  .refresh-btn {
-    background: var(--white); border: 1px solid var(--border);
-    color: var(--text-secondary); padding: 7px 16px; border-radius: 20px;
-    cursor: pointer; font-size: 13px; font-weight: 500; font-family: var(--font);
-    transition: all 0.2s; display: flex; align-items: center; gap: 6px;
-  }
-  .refresh-btn:hover {
-    border-color: var(--indigo); color: var(--indigo);
-    box-shadow: 0 2px 8px rgba(99,102,241,0.12);
-  }
-  .refresh-btn svg { width: 14px; height: 14px; }
+  /* ---- TAB PANELS ---- */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: fadeUp 0.35s ease-out both; }
 
   /* ---- STAT CARDS ---- */
   .stats-row {
@@ -136,96 +190,57 @@
   @media (max-width: 780px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
 
   .stat-card {
-    background: var(--white); border-radius: var(--radius);
+    background: var(--bg-card); border-radius: var(--radius);
     padding: 24px; position: relative;
     border: 1px solid var(--border);
     box-shadow: var(--shadow-sm);
-    transition: box-shadow 0.2s, transform 0.2s;
+    transition: box-shadow 0.2s, transform 0.2s, background-color 0.3s, border-color 0.3s;
   }
   .stat-card:hover { box-shadow: var(--shadow-md); }
-  .stat-card .accent-bar {
-    position: absolute; top: 0; left: 0; right: 0; height: 3px;
-  }
   .stat-label {
-    font-size: 12px; font-weight: 600; color: var(--text-tertiary);
+    font-size: 11px; font-weight: 600; color: var(--text-tertiary);
     text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px;
   }
   .stat-value {
-    font-size: 34px; font-weight: 800; letter-spacing: -2px;
+    font-family: var(--font-display);
+    font-size: 32px; font-weight: 700; letter-spacing: -1px;
     line-height: 1; margin-bottom: 6px;
     color: var(--text);
   }
-  .stat-sub { font-size: 13px; color: var(--text-tertiary); font-weight: 500; }
+  .stat-sub { font-size: 12px; color: var(--text-tertiary); font-weight: 500; }
 
   /* Tooltips */
-  .has-tooltip {
-    position: relative;
-    cursor: help;
-  }
+  .has-tooltip { position: relative; cursor: help; }
   .has-tooltip .tooltip {
-    position: absolute;
-    bottom: calc(100% + 10px);
-    left: 50%;
+    position: absolute; bottom: calc(100% + 10px); left: 50%;
     transform: translateX(-50%);
-    background: var(--text);
-    color: #F8FAFC;
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 1.5;
-    padding: 10px 14px;
-    border-radius: 10px;
-    white-space: normal;
-    width: max-content;
-    max-width: 280px;
-    pointer-events: none;
-    opacity: 0;
+    background: var(--text); color: var(--bg);
+    font-size: 12px; font-weight: 500; line-height: 1.5;
+    padding: 10px 14px; border-radius: 10px;
+    white-space: normal; width: max-content; max-width: 280px;
+    pointer-events: none; opacity: 0;
     transition: opacity 0.15s, transform 0.15s;
     transform: translateX(-50%) translateY(4px);
-    z-index: 100;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-    text-transform: none;
-    letter-spacing: 0;
-    text-align: left;
+    z-index: 100; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    text-transform: none; letter-spacing: 0; text-align: left;
   }
   .has-tooltip .tooltip::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
+    content: ''; position: absolute; top: 100%; left: 50%;
     transform: translateX(-50%);
-    border: 6px solid transparent;
-    border-top-color: var(--text);
+    border: 6px solid transparent; border-top-color: var(--text);
   }
-  .has-tooltip:hover .tooltip {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-  /* For table headers, tooltip goes below */
-  .has-tooltip-below .tooltip {
-    bottom: auto;
-    top: calc(100% + 10px);
-  }
+  .has-tooltip:hover .tooltip { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .has-tooltip-below .tooltip { bottom: auto; top: calc(100% + 10px); }
   .has-tooltip-below .tooltip::after {
-    top: auto;
-    bottom: 100%;
-    border-top-color: transparent;
-    border-bottom-color: var(--text);
+    top: auto; bottom: 100%;
+    border-top-color: transparent; border-bottom-color: var(--text);
   }
-  /* Help icon next to labels */
   .help-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    background: rgba(0,0,0,0.06);
-    color: var(--text-tertiary);
-    font-size: 10px;
-    font-weight: 700;
-    margin-left: 5px;
-    vertical-align: middle;
-    flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 15px; height: 15px; border-radius: 50%;
+    background: var(--border-strong); color: var(--text-tertiary);
+    font-size: 10px; font-weight: 700; margin-left: 5px;
+    vertical-align: middle; flex-shrink: 0;
   }
 
   /* Token explainer */
@@ -237,32 +252,26 @@
 
   /* ---- SECTION HEADINGS ---- */
   .section-header {
-    display: flex; align-items: center; gap: 10px;
-    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
   }
   .section-icon {
     width: 28px; height: 28px; border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
   .section-icon svg { width: 16px; height: 16px; }
-  .section-title {
-    font-size: 16px; font-weight: 700; letter-spacing: -0.3px;
-  }
+  .section-title { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
 
   /* ---- INSIGHTS ---- */
   .insights-section { margin-bottom: 32px; }
   .insight-card {
-    background: var(--white); border-radius: var(--radius-sm);
+    background: var(--bg-card); border-radius: var(--radius-sm);
     padding: 14px 20px; margin-bottom: 8px;
     border: 1px solid var(--border);
     box-shadow: var(--shadow-sm);
-    cursor: pointer; transition: box-shadow 0.2s;
+    cursor: pointer; transition: box-shadow 0.2s, background-color 0.3s, border-color 0.3s;
   }
   .insight-card:hover { box-shadow: var(--shadow-md); }
-  .insight-top {
-    display: flex; align-items: center; gap: 12px;
-  }
+  .insight-top { display: flex; align-items: center; gap: 12px; }
   .insight-arrow {
     margin-left: auto; flex-shrink: 0;
     width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
@@ -277,11 +286,12 @@
   .insight-card.warning .insight-indicator { background: linear-gradient(135deg, #FEF3C7, #FDE68A); }
   .insight-card.info .insight-indicator { background: linear-gradient(135deg, #E0E7FF, #C7D2FE); }
   .insight-card.neutral .insight-indicator { background: linear-gradient(135deg, #F1F5F9, #E2E8F0); }
+  [data-theme="dark"] .insight-card.warning .insight-indicator { background: linear-gradient(135deg, #78350F, #92400E); }
+  [data-theme="dark"] .insight-card.info .insight-indicator { background: linear-gradient(135deg, #312E81, #3730A3); }
+  [data-theme="dark"] .insight-card.neutral .insight-indicator { background: linear-gradient(135deg, #27272A, #3F3F46); }
   .insight-title { font-size: 14px; font-weight: 700; line-height: 1.4; }
   .insight-oneliner { font-size: 13px; color: var(--text-secondary); margin-left: auto; white-space: nowrap; font-weight: 500; }
-  .insight-expand {
-    max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
-  }
+  .insight-expand { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
   .insight-card.expanded .insight-expand { max-height: 300px; }
   .insight-detail {
     font-size: 13px; color: var(--text-secondary); line-height: 1.65;
@@ -290,7 +300,7 @@
   }
   .insight-action-tip {
     font-size: 13px; line-height: 1.6;
-    padding: 8px 0 0 40px; color: var(--indigo); font-weight: 600;
+    padding: 8px 0 0 40px; color: var(--accent); font-weight: 600;
   }
 
   /* ---- CHARTS ---- */
@@ -301,9 +311,10 @@
   @media (max-width: 800px) { .charts-grid { grid-template-columns: 1fr; } }
 
   .chart-card {
-    background: var(--white); border-radius: var(--radius);
+    background: var(--bg-card); border-radius: var(--radius);
     padding: 24px; border: 1px solid var(--border);
     box-shadow: var(--shadow-sm);
+    transition: background-color 0.3s, border-color 0.3s;
   }
   .chart-card h3 {
     font-size: 13px; font-weight: 700; color: var(--text-tertiary);
@@ -320,9 +331,9 @@
   /* ---- TOP PROMPTS ---- */
   .top-prompts { margin-bottom: 32px; }
   .prompts-card {
-    background: var(--white); border-radius: var(--radius);
+    background: var(--bg-card); border-radius: var(--radius);
     border: 1px solid var(--border); box-shadow: var(--shadow-sm);
-    overflow: hidden;
+    overflow: hidden; transition: background-color 0.3s, border-color 0.3s;
   }
   .prompt-row {
     display: grid; grid-template-columns: 36px 1fr auto;
@@ -331,10 +342,10 @@
     cursor: pointer; transition: background 0.15s;
   }
   .prompt-row:last-child { border-bottom: none; }
-  .prompt-row:hover { background: #FAFBFF; }
+  .prompt-row:hover { background: var(--bg-surface); }
   .prompt-rank {
     width: 28px; height: 28px; border-radius: 8px;
-    background: var(--bg); display: flex; align-items: center; justify-content: center;
+    background: var(--bg-surface); display: flex; align-items: center; justify-content: center;
     font-size: 12px; font-weight: 700; color: var(--text-secondary);
   }
   .prompt-row:nth-child(1) .prompt-rank { background: var(--gradient-main); color: white; }
@@ -350,7 +361,7 @@
     display: flex; gap: 1px; height: 4px; margin-top: 8px;
     border-radius: 4px; overflow: hidden;
   }
-  .token-bar-in { background: var(--indigo); height: 100%; border-radius: 4px 0 0 4px; }
+  .token-bar-in { background: var(--accent); height: 100%; border-radius: 4px 0 0 4px; }
   .token-bar-out { background: var(--teal); height: 100%; border-radius: 0 4px 4px 0; }
   .prompt-tokens { text-align: right; white-space: nowrap; padding-top: 2px; }
   .prompt-tokens .value {
@@ -361,30 +372,28 @@
 
   /* ---- PROJECTS ---- */
   .projects-section { margin-bottom: 32px; }
-
-  /* Project accordion */
   .proj-chevron {
     width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center;
     color: var(--text-tertiary); transition: transform 0.25s ease; flex-shrink: 0;
   }
   .proj-row { cursor: pointer; }
-  .proj-row:hover td { background: #FAFBFF; }
+  .proj-row:hover td { background: var(--bg-surface); }
   .proj-row.expanded .proj-chevron { transform: rotate(90deg); }
   .proj-drawer td { padding: 0; border-bottom: 1px solid var(--border); }
-  .proj-drawer-inner { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; background: #FAFBFC; }
+  .proj-drawer-inner { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; background: var(--bg-surface); }
   .proj-drawer.open .proj-drawer-inner { max-height: 600px; }
   .proj-drawer-content { padding: 12px 16px 16px; }
   .drawer-prompt-list { display: flex; flex-direction: column; gap: 8px; }
   .drawer-prompt-row {
     display: grid; grid-template-columns: 24px 1fr auto;
     gap: 10px; padding: 10px 14px; align-items: start;
-    background: white; border: 1px solid var(--border); border-radius: 10px;
-    cursor: pointer; transition: box-shadow 0.15s;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+    cursor: pointer; transition: box-shadow 0.15s, background-color 0.3s;
   }
   .drawer-prompt-row:hover { box-shadow: var(--shadow-md); }
   .drawer-rank {
     width: 20px; height: 20px; border-radius: 6px;
-    background: var(--bg); display: flex; align-items: center; justify-content: center;
+    background: var(--bg-surface); display: flex; align-items: center; justify-content: center;
     font-size: 11px; font-weight: 700; color: var(--text-secondary); flex-shrink: 0;
   }
   .drawer-prompt-text {
@@ -394,9 +403,10 @@
   }
   .drawer-prompt-meta { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin-top: 5px; }
   .tool-chip {
-    background: var(--bg); border: 1px solid var(--border-strong);
+    background: var(--bg-surface); border: 1px solid var(--border-strong);
     padding: 1px 7px; border-radius: 6px; font-size: 10px; font-weight: 600;
     color: var(--text-secondary); white-space: nowrap;
+    transition: background-color 0.3s, border-color 0.3s;
   }
   .drawer-tokens { text-align: right; white-space: nowrap; }
   .drawer-tokens .value { font-family: var(--mono); font-size: 14px; font-weight: 700; }
@@ -410,19 +420,19 @@
     margin-bottom: 14px; gap: 12px; flex-wrap: wrap;
   }
   .session-search {
-    background: var(--white); border: 1px solid var(--border);
+    background: var(--bg-card); border: 1px solid var(--border);
     color: var(--text); padding: 9px 16px; border-radius: 10px;
     font-size: 14px; font-weight: 500; width: 300px; outline: none;
-    font-family: var(--font); transition: all 0.2s;
+    font-family: var(--font-body); transition: all 0.2s;
   }
   .session-search::placeholder { color: var(--text-tertiary); }
-  .session-search:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+  .session-search:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(217,119,6,0.1); }
   .session-count { color: var(--text-tertiary); font-size: 13px; font-weight: 600; }
 
   .sessions-card {
-    background: var(--white); border-radius: var(--radius);
+    background: var(--bg-card); border-radius: var(--radius);
     border: 1px solid var(--border); box-shadow: var(--shadow-sm);
-    overflow: visible;
+    overflow: visible; transition: background-color 0.3s, border-color 0.3s;
   }
   .sessions-table { width: 100%; border-collapse: collapse; font-size: 14px; }
   .sessions-table th {
@@ -431,15 +441,16 @@
     letter-spacing: 0.6px; color: var(--text-tertiary);
     border-bottom: 1px solid var(--border);
     cursor: pointer; user-select: none; white-space: nowrap;
-    background: #FAFBFC;
+    background: var(--bg-surface);
+    transition: background-color 0.3s;
   }
   .sessions-table th:hover { color: var(--text-secondary); }
-  .sessions-table th.sorted { color: var(--indigo); }
+  .sessions-table th.sorted { color: var(--accent); }
   .sessions-table td {
     padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle;
   }
   .sessions-table tbody tr { cursor: pointer; transition: background 0.1s; }
-  .sessions-table tbody tr:hover td { background: #FAFBFF; }
+  .sessions-table tbody tr:hover td { background: var(--bg-surface); }
   .sessions-table tbody tr:last-child td { border-bottom: none; }
   .prompt-preview {
     max-width: 340px; overflow: hidden; text-overflow: ellipsis;
@@ -455,37 +466,37 @@
     font-size: 12px; font-weight: 600;
     transition: box-shadow 0.15s;
   }
-  .model-badge:focus-visible { outline: 2px solid var(--indigo); outline-offset: 2px; }
-  /* Contrast-corrected badge colors (WCAG AA compliant) */
+  .model-badge:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .model-opus { background: #EEF2FF; color: #3730A3; }
   .model-sonnet { background: #ECFDF5; color: #047857; }
   .model-haiku { background: #FFF7ED; color: #C2410C; }
   .model-unknown { background: #F1F5F9; color: #475569; }
+  [data-theme="dark"] .model-opus { background: #312E81; color: #C7D2FE; }
+  [data-theme="dark"] .model-sonnet { background: #064E3B; color: #A7F3D0; }
+  [data-theme="dark"] .model-haiku { background: #7C2D12; color: #FED7AA; }
+  [data-theme="dark"] .model-unknown { background: #27272A; color: #A1A1AA; }
   .model-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
   .model-opus .model-dot { background: #4F46E5; }
   .model-sonnet .model-dot { background: #10B981; }
   .model-haiku .model-dot { background: #F97316; }
-  /* Sub-line pills in project rows — compact variant */
+  [data-theme="dark"] .model-opus .model-dot { background: #818CF8; }
+  [data-theme="dark"] .model-sonnet .model-dot { background: #34D399; }
+  [data-theme="dark"] .model-haiku .model-dot { background: #FB923C; }
   .model-pills {
     list-style: none; padding: 0; margin: 5px 0 0;
     display: flex; flex-wrap: wrap; gap: 4px;
   }
   .model-pills li { display: flex; }
-  .model-pills .model-badge {
-    padding: 2px 8px; font-size: 11px; border-radius: 10px;
-  }
-  /* Screen-reader-only label (WCAG 2.1 compliant) */
+  .model-pills .model-badge { padding: 2px 8px; font-size: 11px; border-radius: 10px; }
   .sr-only {
     position: absolute; width: 1px; height: 1px; padding: 0;
     margin: -1px; overflow: hidden; clip: rect(0,0,0,0);
     white-space: nowrap; border-width: 0;
   }
-  /* Inline ↓in ↑out token pair inside a model badge */
   .token-detail {
     display: inline-flex; align-items: center; gap: 2px;
     font-size: 10px; font-weight: 600; opacity: 0.9;
   }
-  /* Project name styled as path */
   .proj-name {
     font-weight: 600; font-size: 13px;
     font-family: var(--mono); letter-spacing: -0.2px; color: var(--text);
@@ -497,13 +508,24 @@
     max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
 
-  /* ---- DRILLDOWN ---- */
-  .drilldown {
-    background: var(--white); border-radius: var(--radius);
-    padding: 28px; margin-bottom: 32px; display: none;
-    border: 1px solid var(--border); box-shadow: var(--shadow-lg);
+  /* ---- DRILLDOWN OVERLAY ---- */
+  .drilldown-overlay {
+    position: fixed; inset: 0; z-index: 2000;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    display: none; align-items: center; justify-content: center;
+    padding: 24px;
+    opacity: 0; transition: opacity 0.2s;
   }
-  .drilldown.open { display: block; animation: fadeUp 0.3s ease-out; }
+  .drilldown-overlay.open { display: flex; opacity: 1; }
+  .drilldown {
+    background: var(--bg-card); border-radius: var(--radius);
+    padding: 28px; width: 100%; max-width: 720px;
+    max-height: calc(100vh - 48px); overflow-y: auto;
+    border: 1px solid var(--border); box-shadow: var(--shadow-lg);
+    animation: fadeUp 0.25s ease-out;
+    transition: background-color 0.3s, border-color 0.3s;
+  }
   .drilldown-header {
     display: flex; align-items: flex-start; justify-content: space-between;
     margin-bottom: 24px; gap: 16px;
@@ -511,23 +533,22 @@
   .drilldown-title { font-size: 16px; font-weight: 700; line-height: 1.4; }
   .drilldown-meta { font-size: 13px; color: var(--text-tertiary); margin-top: 4px; font-weight: 500; }
   .drilldown-close {
-    background: var(--bg); border: none; color: var(--text-secondary);
+    background: var(--bg-surface); border: none; color: var(--text-secondary);
     width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
     font-size: 18px; display: flex; align-items: center; justify-content: center;
     flex-shrink: 0; transition: all 0.15s;
   }
-  .drilldown-close:hover { background: #EEF2FF; color: var(--indigo); }
-
+  .drilldown-close:hover { background: var(--accent-bg); color: var(--accent); }
   .query-list { display: flex; flex-direction: column; gap: 8px; }
   .query-item {
     display: grid; grid-template-columns: 36px 1fr auto;
     gap: 14px; padding: 14px 16px; border-radius: var(--radius-sm);
-    background: var(--bg); align-items: start;
+    background: var(--bg-surface); align-items: start;
     transition: background 0.1s;
   }
-  .query-item:hover { background: #EEF2FF; }
+  .query-item:hover { background: var(--accent-bg); }
   .query-num {
-    width: 28px; height: 28px; border-radius: 8px; background: var(--white);
+    width: 28px; height: 28px; border-radius: 8px; background: var(--bg-card);
     border: 1px solid var(--border);
     font-size: 12px; font-weight: 700; color: var(--text-tertiary);
     display: flex; align-items: center; justify-content: center;
@@ -543,30 +564,78 @@
     text-align: center; padding: 24px;
     color: var(--text-tertiary); font-size: 13px; font-weight: 500;
   }
-  .footer a { color: var(--indigo); text-decoration: none; font-weight: 600; }
+  .footer a { color: var(--accent); text-decoration: none; font-weight: 600; }
   .footer a:hover { text-decoration: underline; }
 
   /* Privacy notice */
   .privacy-notice {
     display: flex; align-items: center; justify-content: center; gap: 6px;
     font-size: 13px; font-weight: 500; color: var(--text-secondary);
-    background: rgba(99,102,241,0.06); border: 1px solid rgba(99,102,241,0.1);
+    background: var(--accent-bg); border: 1px solid rgba(217,119,6,0.15);
     padding: 8px 16px; border-radius: 10px; margin-bottom: 20px;
+    transition: background-color 0.3s, border-color 0.3s, color 0.3s;
   }
 
-  /* Hero / value prop */
-  .hero-section {
-    text-align: center; margin-bottom: 36px; padding: 0 20px;
+  /* ---- STORAGE ---- */
+  .storage-section { margin-bottom: 40px; }
+  .storage-headline {
+    font-family: var(--font-display); font-size: 48px; font-weight: 700;
+    letter-spacing: -2px; margin-bottom: 4px;
   }
-  .hero-title {
-    font-size: 38px; font-weight: 800; letter-spacing: -1.5px;
-    background: var(--gradient-main); -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent; background-clip: text;
-    margin-bottom: 10px; line-height: 1.3;
+  .storage-sub { font-size: 14px; color: var(--text-tertiary); font-weight: 500; margin-bottom: 28px; }
+  .storage-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+  @media (max-width: 780px) { .storage-grid { grid-template-columns: 1fr; } }
+  .storage-bar-card {
+    background: var(--bg-card); border-radius: var(--radius); padding: 24px;
+    border: 1px solid var(--border); box-shadow: var(--shadow-sm);
+    transition: background-color 0.3s, border-color 0.3s;
   }
-  .hero-subtitle {
-    font-size: 15px; color: var(--text-secondary); font-weight: 500;
-    max-width: 600px; margin: 0 auto; line-height: 1.7;
+  .storage-bar-card h3 {
+    font-size: 13px; font-weight: 700; color: var(--text-tertiary);
+    text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 16px;
+  }
+  .storage-bar-row {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+  }
+  .storage-bar-label {
+    font-family: var(--mono); font-size: 13px; font-weight: 500;
+    min-width: 120px; color: var(--text);
+  }
+  .storage-bar-track {
+    flex: 1; height: 8px; background: var(--bg-surface);
+    border-radius: 4px; overflow: hidden;
+  }
+  .storage-bar-fill {
+    height: 100%; border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+  .storage-bar-size {
+    font-family: var(--mono); font-size: 12px; font-weight: 600;
+    color: var(--text-secondary); min-width: 70px; text-align: right;
+  }
+  .storage-treemap {
+    display: grid; gap: 4px; grid-auto-rows: minmax(60px, auto);
+    margin-bottom: 28px;
+  }
+  .treemap-cell {
+    border-radius: var(--radius-sm); padding: 14px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    min-height: 60px; position: relative; overflow: hidden;
+  }
+  .treemap-cell .tm-name {
+    font-family: var(--mono); font-size: 13px; font-weight: 600; color: white;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  }
+  .treemap-cell .tm-size {
+    font-family: var(--mono); font-size: 11px; color: rgba(255,255,255,0.8);
+  }
+
+  /* ---- RESPONSIVE ---- */
+  @media (max-width: 700px) {
+    .nav-tabs { overflow-x: auto; }
+    .date-range { display: none; }
+    .drilldown-overlay { padding: 0; align-items: flex-end; }
+    .drilldown { border-radius: var(--radius) var(--radius) 0 0; max-height: 85vh; }
   }
 </style>
 </head>
@@ -574,110 +643,166 @@
 
 <div id="loading" class="loading">
   <div class="spinner"></div>
-  <div class="loading-text">Reading your Claude Code sessions...</div>
+  <div class="loading-text">Loading claude.usage...</div>
 </div>
+
+<!-- Navbar -->
+<nav class="navbar" id="navbar" style="display:none">
+  <div class="nav-brand">claude.usage</div>
+  <div class="nav-tabs" id="navTabs">
+    <button class="nav-tab active" data-tab="overview" onclick="switchTab('overview')">Overview</button>
+    <button class="nav-tab" data-tab="insights" onclick="switchTab('insights')">Insights</button>
+    <button class="nav-tab" data-tab="projects" onclick="switchTab('projects')">Projects</button>
+    <button class="nav-tab" data-tab="prompts" onclick="switchTab('prompts')">Expensive Prompts</button>
+    <button class="nav-tab" data-tab="sessions" onclick="switchTab('sessions')">Sessions</button>
+    <button class="nav-tab" data-tab="storage" onclick="switchTab('storage')">Storage</button>
+    <div class="nav-indicator" id="navIndicator"></div>
+  </div>
+  <div class="nav-right">
+    <span id="dateRange" class="date-range"></span>
+    <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle dark mode" aria-label="Toggle dark mode"></button>
+    <button class="refresh-btn" onclick="refreshData()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+      Refresh
+    </button>
+  </div>
+</nav>
 
 <div id="app" class="container" style="display:none">
 
-  <!-- Privacy notice -->
-  <div class="privacy-notice animate">
-    &#128274; All data stays on your machine. Nothing is sent anywhere.
-  </div>
+  <!-- OVERVIEW TAB -->
+  <div class="tab-panel active" id="tab-overview">
+    <div class="privacy-notice animate">
+      &#128274; All data stays on your machine. Nothing is sent anywhere.
+    </div>
 
-  <!-- Header -->
-  <div class="header animate">
-    <div class="header-left">
-      <div class="logo-mark">
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    <div class="stats-row" id="statsRow"></div>
+    <div id="tokenExplainer" class="token-explainer animate delay-2">
+      Tokens are how AI measures text -- roughly 1 token = 1 word. Hover over any label with a <span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--border-strong);font-size:10px;font-weight:700;vertical-align:middle;">?</span> for an explanation.
+    </div>
+
+    <div class="charts-grid animate delay-3">
+      <div class="chart-card">
+        <h3 class="has-tooltip has-tooltip-below" style="display:inline-block">Tokens per Day<div class="tooltip">How many tokens you used each day. The amber portion is what Claude read, the teal is what Claude wrote.</div></h3>
+        <canvas id="dailyChart"></canvas>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div> Read by Claude</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div> Written by Claude</div>
+        </div>
       </div>
-      <h1>Claude Spend</h1>
-    </div>
-    <div class="header-right">
-      <span id="dateRange" class="date-range"></span>
-      <button class="refresh-btn" onclick="refreshData()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-        Refresh
-      </button>
-    </div>
-  </div>
-
-  <!-- Value proposition -->
-  <div class="hero-section animate delay-1">
-    <h2 class="hero-title">Your Claude Code usage, visualized.</h2>
-    <p class="hero-subtitle">See where your tokens actually go.</p>
-  </div>
-
-  <!-- Stats -->
-  <div class="stats-row" id="statsRow"></div>
-  <div id="tokenExplainer" class="token-explainer animate delay-2">
-    Tokens are how AI measures text -- roughly 1 token = 1 word. Hover over any label with a <span style="display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:rgba(0,0,0,0.08);font-size:10px;font-weight:700;vertical-align:middle;">?</span> for an explanation.
-  </div>
-
-  <!-- Insights -->
-  <div id="insightsSection" class="insights-section" style="display:none">
-    <div class="section-header animate">
-      <div class="section-icon" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round"><path d="M12 2a7 7 0 0 1 4 12.75V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.25A7 7 0 0 1 12 2z"/><path d="M9 21h6"/></svg>
-      </div>
-      <div class="section-title">Insights</div>
-    </div>
-    <div id="insightsList"></div>
-  </div>
-
-  <!-- Charts -->
-  <div class="charts-grid animate delay-3">
-    <div class="chart-card">
-      <h3 class="has-tooltip has-tooltip-below" style="display:inline-block">Tokens per Day<div class="tooltip">How many tokens you used each day. Taller bars mean heavier usage days. The indigo portion is what Claude read, the teal is what Claude wrote.</div></h3>
-      <canvas id="dailyChart"></canvas>
-      <div class="legend">
-        <div class="legend-item"><div class="legend-dot" style="background:var(--indigo)"></div> Read by Claude (your messages + context)</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div> Written by Claude (responses)</div>
+      <div class="chart-card">
+        <h3>By Model</h3>
+        <canvas id="modelChart"></canvas>
+        <div id="modelLegend" class="legend" style="flex-direction:column; gap:12px; margin-top:20px;"></div>
       </div>
     </div>
-    <div class="chart-card">
-      <h3>By Model</h3>
-      <canvas id="modelChart"></canvas>
-      <div id="modelLegend" class="legend" style="flex-direction:column; gap:12px; margin-top:20px;"></div>
-    </div>
   </div>
 
-  <!-- Projects -->
-  <div class="projects-section animate delay-4">
-    <div class="section-header">
-      <div class="section-icon" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M12 3v18"/><path d="M3 7l9 4 9-4"/></svg>
+  <!-- INSIGHTS TAB -->
+  <div class="tab-panel" id="tab-insights">
+    <div id="insightsSection" class="insights-section">
+      <div class="section-header animate">
+        <div class="section-icon" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round"><path d="M12 2a7 7 0 0 1 4 12.75V17a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v-2.25A7 7 0 0 1 12 2z"/><path d="M9 21h6"/></svg>
+        </div>
+        <div class="section-title">Insights</div>
       </div>
-      <div class="section-title">Projects</div>
-      <span id="projectsCount" style="font-size:13px;color:var(--text-tertiary);font-weight:600;margin-left:auto"></span>
-    </div>
-    <div class="sessions-card">
-      <table class="sessions-table">
-        <thead>
-          <tr>
-            <th>Project</th>
-            <th style="text-align:right">Total Tokens</th>
-            <th style="text-align:right">Sessions</th>
-            <th style="text-align:right">Queries</th>
-          </tr>
-        </thead>
-        <tbody id="projectsBody"></tbody>
-      </table>
+      <div id="insightsList"></div>
     </div>
   </div>
 
-  <!-- Most Expensive Prompts -->
-  <div class="top-prompts animate delay-4">
-    <div class="section-header">
-      <div class="section-icon" style="background:linear-gradient(135deg,#E0E7FF,#C7D2FE)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5" stroke-linecap="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+  <!-- PROJECTS TAB -->
+  <div class="tab-panel" id="tab-projects">
+    <div class="projects-section animate">
+      <div class="section-header">
+        <div class="section-icon" style="background:linear-gradient(135deg,#EDE9FE,#DDD6FE)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-linecap="round"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M12 3v18"/><path d="M3 7l9 4 9-4"/></svg>
+        </div>
+        <div class="section-title">Projects</div>
+        <span id="projectsCount" style="font-size:13px;color:var(--text-tertiary);font-weight:600;margin-left:auto"></span>
       </div>
-      <div class="section-title has-tooltip has-tooltip-below" style="display:inline-flex">Most Expensive Prompts<div class="tooltip">Your top 20 individual messages ranked by how many tokens they used. Short vague messages like "Yes" often rank highest because they trigger long chains of tool calls where Claude tries to figure out what you meant.</div></div>
+      <div class="sessions-card">
+        <table class="sessions-table">
+          <thead>
+            <tr>
+              <th>Project</th>
+              <th style="text-align:right">Total Tokens</th>
+              <th style="text-align:right">Sessions</th>
+              <th style="text-align:right">Queries</th>
+            </tr>
+          </thead>
+          <tbody id="projectsBody"></tbody>
+        </table>
+      </div>
     </div>
-    <div class="prompts-card" id="topPromptsList"></div>
   </div>
 
-  <!-- Drill-down -->
-  <div id="drilldown" class="drilldown">
+  <!-- EXPENSIVE PROMPTS TAB -->
+  <div class="tab-panel" id="tab-prompts">
+    <div class="top-prompts animate">
+      <div class="section-header">
+        <div class="section-icon" style="background:linear-gradient(135deg,#E0E7FF,#C7D2FE)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.5" stroke-linecap="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+        </div>
+        <div class="section-title has-tooltip has-tooltip-below" style="display:inline-flex">Most Expensive Prompts<div class="tooltip">Your top 20 individual messages ranked by how many tokens they used.</div></div>
+      </div>
+      <div class="prompts-card" id="topPromptsList"></div>
+    </div>
+  </div>
+
+  <!-- STORAGE TAB -->
+  <div class="tab-panel" id="tab-storage">
+    <div class="storage-section animate">
+      <div class="section-header">
+        <div class="section-icon" style="background:linear-gradient(135deg,#FEF3C7,#FDE68A)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2.5" stroke-linecap="round"><path d="M4 7V4a2 2 0 0 1 2-2h8.5L20 7.5V20a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3"/><path d="M14 2v6h6"/><path d="M2 15h10"/><path d="M5 12l-3 3 3 3"/></svg>
+        </div>
+        <div class="section-title">Storage</div>
+      </div>
+      <div id="storageContent"></div>
+    </div>
+  </div>
+
+  <!-- SESSIONS TAB -->
+  <div class="tab-panel" id="tab-sessions">
+    <div class="sessions-section animate">
+      <div class="section-header">
+        <div class="section-icon" style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+        </div>
+        <div class="section-title">All Sessions</div>
+      </div>
+      <div class="sessions-toolbar">
+        <input type="text" class="session-search" id="searchInput" placeholder="Search prompts, models, projects...">
+        <span id="sessionCount" class="session-count"></span>
+      </div>
+      <div class="sessions-card">
+        <table class="sessions-table">
+          <thead>
+            <tr>
+              <th data-sort="date">Date</th>
+              <th data-sort="prompt">What you asked</th>
+              <th data-sort="model" class="has-tooltip has-tooltip-below">Model<div class="tooltip">Which AI model was used.</div></th>
+              <th data-sort="queries" style="text-align:right" class="has-tooltip has-tooltip-below">Messages<div class="tooltip">How many back-and-forth messages happened in this conversation.</div></th>
+              <th data-sort="total" style="text-align:right" class="sorted has-tooltip has-tooltip-below">Total tokens<div class="tooltip">The total number of tokens used in this conversation.</div></th>
+              <th data-sort="input" style="text-align:right" class="has-tooltip has-tooltip-below">Read<div class="tooltip">Tokens Claude read: your messages, conversation history, files, and system context.</div></th>
+              <th data-sort="output" style="text-align:right" class="has-tooltip has-tooltip-below">Written<div class="tooltip">Tokens Claude wrote back: responses, code, explanations.</div></th>
+            </tr>
+          </thead>
+          <tbody id="sessionsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Forked from <a href="https://github.com/AniketParihar/claude-spend" target="_blank" rel="noopener noreferrer">claude-spend</a> by <a href="https://www.linkedin.com/in/aniketparihar/" target="_blank" rel="noopener noreferrer">Aniket</a> &mdash; thank you! &middot; Built with <a href="https://claude.ai/code" target="_blank" rel="noopener noreferrer">Claude Code</a>
+  </div>
+</div>
+
+<!-- Drilldown Modal Overlay -->
+<div class="drilldown-overlay" id="drilldownOverlay" onclick="if(event.target===this)closeDrilldown()">
+  <div class="drilldown" id="drilldown">
     <div class="drilldown-header">
       <div>
         <div id="drilldownTitle" class="drilldown-title"></div>
@@ -687,46 +812,13 @@
     </div>
     <div id="queryList" class="query-list"></div>
   </div>
-
-  <!-- All Sessions -->
-  <div class="sessions-section animate delay-5">
-    <div class="section-header">
-      <div class="section-icon" style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5)">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
-      </div>
-      <div class="section-title">All Sessions</div>
-    </div>
-    <div class="sessions-toolbar">
-      <input type="text" class="session-search" id="searchInput" placeholder="Search prompts, models, projects...">
-      <span id="sessionCount" class="session-count"></span>
-    </div>
-    <div class="sessions-card">
-      <table class="sessions-table">
-        <thead>
-          <tr>
-            <th data-sort="date">Date</th>
-            <th data-sort="prompt">What you asked</th>
-            <th data-sort="model" class="has-tooltip has-tooltip-below">Model<div class="tooltip">Which AI model was used. Opus is the most capable (and uses more tokens), Sonnet is faster and lighter.</div></th>
-            <th data-sort="queries" style="text-align:right" class="has-tooltip has-tooltip-below">Messages<div class="tooltip">How many back-and-forth messages happened in this conversation, including automatic tool calls Claude made.</div></th>
-            <th data-sort="total" style="text-align:right" class="sorted has-tooltip has-tooltip-below">Total tokens<div class="tooltip">The total number of tokens used in this conversation. Higher means more expensive. Long conversations cost more because Claude re-reads everything each turn.</div></th>
-            <th data-sort="input" style="text-align:right" class="has-tooltip has-tooltip-below">Read<div class="tooltip">Tokens Claude read: your messages, the conversation history, files, and system context. This grows with each message because the full history gets re-sent.</div></th>
-            <th data-sort="output" style="text-align:right" class="has-tooltip has-tooltip-below">Written<div class="tooltip">Tokens Claude wrote back: responses, code, explanations. Usually a small fraction of the total.</div></th>
-          </tr>
-        </thead>
-        <tbody id="sessionsBody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="footer">
-    Made with <a href="https://claude.ai/code" target="_blank">Claude Code</a> and &#10084; by <a href="https://www.linkedin.com/in/aniketparihar/" target="_blank">Aniket</a>
-  </div>
 </div>
 
 <script>
 let DATA = null;
 let currentSort = { key: 'total', dir: 'desc' };
 let searchQuery = '';
+let currentTab = 'overview';
 
 function fmt(n) {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
@@ -743,20 +835,16 @@ function modelClass(m) {
   return 'model-unknown';
 }
 function modelShort(m) {
-  // New format: claude-{family}-{major}-{minor}[-date]
-  // e.g. claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5-20251001
   let match = m.match(/^claude-(opus|sonnet|haiku)-(\d+)-(\d+)/i);
   if (match) {
     const name = match[1].charAt(0).toUpperCase() + match[1].slice(1);
     return name + ' ' + match[2] + '.' + match[3];
   }
-  // Old format with sub-version: claude-3-5-{family} or claude-3-7-{family}
   match = m.match(/^claude-(\d+)-(\d+)-(opus|sonnet|haiku)/i);
   if (match) {
     const name = match[3].charAt(0).toUpperCase() + match[3].slice(1);
     return name + ' ' + match[1] + '.' + match[2];
   }
-  // Old format: claude-3-{family}
   match = m.match(/^claude-(\d+)-(opus|sonnet|haiku)/i);
   if (match) {
     const name = match[2].charAt(0).toUpperCase() + match[2].slice(1);
@@ -768,16 +856,13 @@ function modelShort(m) {
   return m;
 }
 function projectShort(p) {
-  // Strip Windows drive prefix (e.g. D-- or C--)
   let s = p.replace(/^[A-Za-z]--/, '');
-  // Iteratively strip known parent directory segments
   const known = /^(?:Users|home|user)-[^-]+-|^(?:GitHub|GitLab|git|Projects|projects|workspace|Workspace|Desktop|Documents|source|src|dev|Dev|code|Code|repos|Repos)-/;
   let prev;
   do { prev = s; s = s.replace(known, ''); } while (s !== prev && s.length > 0);
   return s || p;
 }
 function projectFull(p) {
-  // Show the raw encoded name with Windows drive restored for readability
   return p.replace(/^([A-Za-z])--/, '$1:\\');
 }
 function escapeHtml(s) {
@@ -787,17 +872,82 @@ function formatDate(d) {
   if (!d) return '';
   const parts = d.split('-');
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return `${months[parseInt(parts[1])-1]} ${parseInt(parts[2])}`;
+  return months[parseInt(parts[1])-1] + ' ' + parseInt(parts[2]);
 }
 
+/* ---- THEME SYSTEM ---- */
+function chartColors() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  return {
+    grid: dark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+    gridText: dark ? '#6B6B66' : '#94A3B8',
+    barIn1: dark ? '#F59E0B' : '#D97706',
+    barIn2: dark ? '#FBBF24' : '#F59E0B',
+    barOut1: dark ? '#2DD4BF' : '#14B8A6',
+    barOut2: dark ? '#5EEAD4' : '#2DD4BF',
+    donutGap: dark ? '#1C1C1A' : '#FFFFFF',
+    centerText: dark ? '#EEEEE8' : '#1A1A18',
+    centerSub: dark ? '#6B6B66' : '#94A3B8',
+  };
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('claude-usage-theme', theme);
+  var btn = document.getElementById('themeToggle');
+  btn.textContent = theme === 'dark' ? '\u2600\uFE0F' : '\uD83C\uDF19';
+  if (DATA) { renderDailyChart(); renderModelChart(); }
+}
+function toggleTheme() {
+  var current = document.documentElement.getAttribute('data-theme');
+  applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+// Init theme
+(function() {
+  var saved = localStorage.getItem('claude-usage-theme');
+  var theme = saved || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  document.documentElement.setAttribute('data-theme', theme);
+  document.getElementById('themeToggle').textContent = theme === 'dark' ? '\u2600\uFE0F' : '\uD83C\uDF19';
+})();
+
+/* ---- TAB SYSTEM ---- */
+function switchTab(tabName) {
+  currentTab = tabName;
+  var panels = document.querySelectorAll('.tab-panel');
+  for (var i = 0; i < panels.length; i++) panels[i].classList.remove('active');
+  var tabs = document.querySelectorAll('.nav-tab');
+  for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+  var panel = document.getElementById('tab-' + tabName);
+  var tab = document.querySelector('.nav-tab[data-tab="' + tabName + '"]');
+  if (panel) panel.classList.add('active');
+  if (tab) tab.classList.add('active');
+  updateTabIndicator();
+  // Redraw charts when switching to overview (canvas needs visible container)
+  if (tabName === 'overview' && DATA) {
+    setTimeout(function() { renderDailyChart(); renderModelChart(); }, 10);
+  }
+}
+function updateTabIndicator() {
+  var activeTab = document.querySelector('.nav-tab.active');
+  var indicator = document.getElementById('navIndicator');
+  if (!activeTab || !indicator) return;
+  var container = document.getElementById('navTabs');
+  var containerRect = container.getBoundingClientRect();
+  var tabRect = activeTab.getBoundingClientRect();
+  indicator.style.left = (tabRect.left - containerRect.left) + 'px';
+  indicator.style.width = tabRect.width + 'px';
+}
+
+/* ---- DATA ---- */
 async function fetchData() {
-  const res = await fetch('/api/data');
+  var res = await fetch('/api/data');
   DATA = await res.json();
   render();
 }
 async function refreshData() {
   document.getElementById('loading').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
+  document.getElementById('navbar').style.display = 'none';
   await fetch('/api/refresh');
   await fetchData();
 }
@@ -805,6 +955,7 @@ async function refreshData() {
 function render() {
   document.getElementById('loading').style.display = 'none';
   document.getElementById('app').style.display = 'block';
+  document.getElementById('navbar').style.display = 'flex';
   renderStats();
   renderInsights();
   renderDailyChart();
@@ -812,127 +963,135 @@ function render() {
   renderProjectBreakdown();
   renderTopPrompts();
   renderSessions();
+  renderStorage();
+  setTimeout(updateTabIndicator, 0);
 }
 
 // Stats
 function renderStats() {
-  const t = DATA.totals;
-  const range = t.dateRange ? `${formatDate(t.dateRange.from)} - ${formatDate(t.dateRange.to)}` : '';
+  var t = DATA.totals;
+  var range = t.dateRange ? formatDate(t.dateRange.from) + ' \u2013 ' + formatDate(t.dateRange.to) : '';
   document.getElementById('dateRange').textContent = range;
 
-  const cards = [
-    { label: 'Total Usage', value: fmt(t.totalTokens), sub: `${fmt(t.totalInputTokens)} read by Claude + ${fmt(t.totalOutputTokens)} written back`,
-      tip: 'The total number of tokens used across all your conversations. This includes everything Claude reads (your messages, conversation history, files) plus everything Claude writes back.' },
-    { label: 'Conversations', value: fmtFull(t.totalSessions), sub: `Each one used ~${fmt(t.avgTokensPerSession)} tokens on average`,
-      tip: 'Each time you start Claude Code and begin chatting, that counts as one conversation. A new conversation starts fresh with no prior context.' },
-    { label: 'Messages Sent', value: fmtFull(t.totalQueries), sub: `Each message cost ~${fmt(t.avgTokensPerQuery)} tokens on average`,
-      tip: 'Every time you hit Enter and send something to Claude, that is one message. This includes follow-up tool calls Claude makes automatically behind the scenes.' },
-    { label: 'Claude Wrote', value: fmt(t.totalOutputTokens), sub: `Only ${((t.totalOutputTokens / Math.max(t.totalTokens, 1)) * 100).toFixed(1)}% of total -- most usage is from re-reading context`,
-      tip: 'The tokens Claude spent writing responses, code, and explanations. This is usually a tiny fraction of total usage because most tokens go toward re-reading your conversation history.' },
+  var cards = [
+    { label: 'Total Usage', value: fmt(t.totalTokens), sub: fmt(t.totalInputTokens) + ' read + ' + fmt(t.totalOutputTokens) + ' written',
+      tip: 'The total number of tokens used across all your conversations.' },
+    { label: 'Conversations', value: fmtFull(t.totalSessions), sub: '~' + fmt(t.avgTokensPerSession) + ' tokens avg',
+      tip: 'Each time you start Claude Code, that counts as one conversation.' },
+    { label: 'Messages Sent', value: fmtFull(t.totalQueries), sub: '~' + fmt(t.avgTokensPerQuery) + ' tokens avg',
+      tip: 'Every message you sent, including automatic tool calls.' },
+    { label: 'Claude Wrote', value: fmt(t.totalOutputTokens), sub: ((t.totalOutputTokens / Math.max(t.totalTokens, 1)) * 100).toFixed(1) + '% of total',
+      tip: 'Tokens Claude spent writing responses. Usually a tiny fraction of total.' },
   ];
 
-  document.getElementById('statsRow').innerHTML = cards.map((c, i) => `
-    <div class="stat-card animate delay-${i + 1}">
-      <div class="stat-label has-tooltip">${c.label}<span class="help-icon">?</span><div class="tooltip">${c.tip}</div></div>
-      <div class="stat-value">${c.value}</div>
-      <div class="stat-sub">${c.sub}</div>
-    </div>`).join('');
+  var html = '';
+  for (var i = 0; i < cards.length; i++) {
+    var c = cards[i];
+    html += '<div class="stat-card animate delay-' + (i + 1) + '">' +
+      '<div class="stat-label has-tooltip">' + c.label + '<span class="help-icon">?</span><div class="tooltip">' + c.tip + '</div></div>' +
+      '<div class="stat-value">' + c.value + '</div>' +
+      '<div class="stat-sub">' + c.sub + '</div>' +
+      '</div>';
+  }
+  document.getElementById('statsRow').innerHTML = html;
 }
 
 // Insights
 function renderInsights() {
-  const insights = DATA.insights || [];
-  const section = document.getElementById('insightsSection');
-  if (!insights.length) { section.style.display = 'none'; return; }
+  var insights = DATA.insights || [];
+  if (!insights.length) {
+    document.getElementById('insightsList').innerHTML = '<div class="drawer-empty">No insights yet. Use Claude Code more to generate insights.</div>';
+    return;
+  }
 
-  section.style.display = 'block';
-  const icons = { warning: '!', info: 'i', neutral: '~' };
-  const emojis = { warning: '\u26A0\uFE0F', info: '\uD83D\uDCA1', neutral: '\uD83D\uDCC5' };
-
-  document.getElementById('insightsList').innerHTML = insights.map((ins, i) => {
-    const detailHtml = ins.description ? `<div class="insight-detail">${escapeHtml(ins.description)}</div>` : '';
-    const actionHtml = ins.action ? `<div class="insight-action-tip">${escapeHtml(ins.action)}</div>` : '';
-    return `<div class="insight-card ${ins.type} animate delay-${Math.min(i + 2, 5)}" onclick="this.classList.toggle('expanded')">
-      <div class="insight-top">
-        <div class="insight-indicator">${emojis[ins.type] || ''}</div>
-        <div class="insight-title">${escapeHtml(ins.title)}</div>
-        <div class="insight-arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5L6 7.5L9 4.5"/></svg></div>
-      </div>
-      <div class="insight-expand">
-        ${detailHtml}
-        ${actionHtml}
-      </div>
-    </div>`;
-  }).join('');
+  var emojis = { warning: '\u26A0\uFE0F', info: '\uD83D\uDCA1', neutral: '\uD83D\uDCC5' };
+  var html = '';
+  for (var i = 0; i < insights.length; i++) {
+    var ins = insights[i];
+    var detailHtml = ins.description ? '<div class="insight-detail">' + escapeHtml(ins.description) + '</div>' : '';
+    var actionHtml = ins.action ? '<div class="insight-action-tip">' + escapeHtml(ins.action) + '</div>' : '';
+    html += '<div class="insight-card ' + ins.type + ' animate delay-' + Math.min(i + 2, 5) + '" onclick="this.classList.toggle(\'expanded\')">' +
+      '<div class="insight-top">' +
+      '<div class="insight-indicator">' + (emojis[ins.type] || '') + '</div>' +
+      '<div class="insight-title">' + escapeHtml(ins.title) + '</div>' +
+      '<div class="insight-arrow"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 4.5L6 7.5L9 4.5"/></svg></div>' +
+      '</div>' +
+      '<div class="insight-expand">' + detailHtml + actionHtml + '</div>' +
+      '</div>';
+  }
+  document.getElementById('insightsList').innerHTML = html;
 }
 
 // Daily chart
 function renderDailyChart() {
-  const canvas = document.getElementById('dailyChart');
-  const ctx = canvas.getContext('2d');
-  const data = DATA.dailyUsage;
+  var canvas = document.getElementById('dailyChart');
+  if (!canvas.offsetParent) return;
+  var ctx = canvas.getContext('2d');
+  var data = DATA.dailyUsage;
   if (!data.length) return;
 
-  const dpr = window.devicePixelRatio || 1;
-  const w = canvas.parentElement.clientWidth - 48;
-  const h = 200;
+  var colors = chartColors();
+  var dpr = window.devicePixelRatio || 1;
+  var w = canvas.parentElement.clientWidth - 48;
+  var h = 200;
   canvas.width = w * dpr; canvas.height = h * dpr;
   canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
   ctx.scale(dpr, dpr);
   ctx.clearRect(0, 0, w, h);
 
-  const maxTotal = Math.max(...data.map(d => d.totalTokens));
-  const barW = Math.max(8, Math.min(32, (w - 52) / data.length - 3));
-  const gap = 3;
-  const chartH = h - 36;
-  const startX = 48;
+  var maxTotal = Math.max.apply(null, data.map(function(d) { return d.totalTokens; }));
+  var barW = Math.max(8, Math.min(32, (w - 52) / data.length - 3));
+  var gap = 3;
+  var chartH = h - 36;
+  var startX = 48;
 
   // Grid
-  ctx.font = '500 10px Inter, system-ui';
-  ctx.fillStyle = '#94A3B8';
+  ctx.font = "500 10px 'IBM Plex Sans', system-ui";
+  ctx.fillStyle = colors.gridText;
   ctx.textAlign = 'right';
-  for (let i = 0; i <= 4; i++) {
-    const val = (maxTotal / 4) * i;
-    const y = chartH - (chartH * i / 4) + 8;
+  for (var i = 0; i <= 4; i++) {
+    var val = (maxTotal / 4) * i;
+    var y = chartH - (chartH * i / 4) + 8;
     ctx.fillText(fmt(val), startX - 10, y + 3);
-    ctx.strokeStyle = 'rgba(0,0,0,0.04)'; ctx.lineWidth = 1;
+    ctx.strokeStyle = colors.grid; ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(startX, y); ctx.lineTo(w, y); ctx.stroke();
   }
 
-  // Bars with gradient
-  const inGrad = ctx.createLinearGradient(0, chartH + 8, 0, 0);
-  inGrad.addColorStop(0, '#818CF8'); inGrad.addColorStop(1, '#6366F1');
-  const outGrad = ctx.createLinearGradient(0, chartH + 8, 0, 0);
-  outGrad.addColorStop(0, '#2DD4BF'); outGrad.addColorStop(1, '#14B8A6');
+  // Bars
+  var inGrad = ctx.createLinearGradient(0, chartH + 8, 0, 0);
+  inGrad.addColorStop(0, colors.barIn2); inGrad.addColorStop(1, colors.barIn1);
+  var outGrad = ctx.createLinearGradient(0, chartH + 8, 0, 0);
+  outGrad.addColorStop(0, colors.barOut2); outGrad.addColorStop(1, colors.barOut1);
 
-  data.forEach((d, i) => {
-    const x = startX + i * (barW + gap);
-    const baseY = chartH + 8;
-    const r = Math.min(4, barW / 2);
+  for (var i = 0; i < data.length; i++) {
+    var d = data[i];
+    var x = startX + i * (barW + gap);
+    var baseY = chartH + 8;
+    var r = Math.min(4, barW / 2);
 
-    const outH = (d.outputTokens / maxTotal) * chartH;
+    var outH = (d.outputTokens / maxTotal) * chartH;
     if (outH > 0) {
       ctx.fillStyle = outGrad;
       ctx.beginPath(); roundedRect(ctx, x, baseY - outH, barW, outH, r); ctx.fill();
     }
 
-    const inH = (d.inputTokens / maxTotal) * chartH;
+    var inH = (d.inputTokens / maxTotal) * chartH;
     if (inH > 0) {
       ctx.fillStyle = inGrad;
       ctx.beginPath(); roundedRect(ctx, x, baseY - outH - inH, barW, inH, r); ctx.fill();
     }
-  });
+  }
 
   // X labels
-  ctx.fillStyle = '#94A3B8'; ctx.textAlign = 'center';
-  ctx.font = '500 10px Inter, system-ui';
-  const step = Math.max(1, Math.floor(data.length / 7));
-  data.forEach((d, i) => {
+  ctx.fillStyle = colors.gridText; ctx.textAlign = 'center';
+  ctx.font = "500 10px 'IBM Plex Sans', system-ui";
+  var step = Math.max(1, Math.floor(data.length / 7));
+  for (var i = 0; i < data.length; i++) {
     if (i % step === 0 || i === data.length - 1) {
-      const x = startX + i * (barW + gap) + barW / 2;
-      ctx.fillText(formatDate(d.date), x, chartH + 24);
+      var x = startX + i * (barW + gap) + barW / 2;
+      ctx.fillText(formatDate(data[i].date), x, chartH + 24);
     }
-  });
+  }
 }
 
 function roundedRect(ctx, x, y, w, h, r) {
@@ -952,34 +1111,36 @@ function roundedRect(ctx, x, y, w, h, r) {
 
 // Model donut
 function renderModelChart() {
-  const canvas = document.getElementById('modelChart');
-  const ctx = canvas.getContext('2d');
-  const data = DATA.modelBreakdown;
+  var canvas = document.getElementById('modelChart');
+  if (!canvas.offsetParent) return;
+  var ctx = canvas.getContext('2d');
+  var data = DATA.modelBreakdown;
   if (!data.length) return;
 
-  const dpr = window.devicePixelRatio || 1;
-  const size = Math.min(180, canvas.parentElement.clientWidth - 48);
+  var colors = chartColors();
+  var dpr = window.devicePixelRatio || 1;
+  var size = Math.min(180, canvas.parentElement.clientWidth - 48);
   canvas.width = size * dpr; canvas.height = size * dpr;
   canvas.style.width = size + 'px'; canvas.style.height = size + 'px';
   ctx.scale(dpr, dpr);
 
-  const cx = size/2, cy = size/2, r = size/2 - 6, innerR = r * 0.6;
-  const total = data.reduce((s, d) => s + d.totalTokens, 0);
+  var cx = size/2, cy = size/2, r = size/2 - 6, innerR = r * 0.6;
+  var total = data.reduce(function(s, d) { return s + d.totalTokens; }, 0);
 
-  const modelColors = { opus: ['#6366F1','#818CF8'], sonnet: ['#10B981','#34D399'], haiku: ['#F97316','#FB923C'] };
+  var modelClrs = { opus: ['#6366F1','#818CF8'], sonnet: ['#10B981','#34D399'], haiku: ['#F97316','#FB923C'] };
   function getColors(m) {
-    for (const [k, c] of Object.entries(modelColors)) { if (m.includes(k)) return c; }
+    var keys = Object.keys(modelClrs);
+    for (var i = 0; i < keys.length; i++) { if (m.includes(keys[i])) return modelClrs[keys[i]]; }
     return ['#94A3B8','#CBD5E1'];
   }
 
-  let angle = -Math.PI / 2;
-  const slices = [...data].sort((a, b) => b.totalTokens - a.totalTokens);
+  var angle = -Math.PI / 2;
+  var slices = data.slice().sort(function(a, b) { return b.totalTokens - a.totalTokens; });
 
-  slices.forEach(d => {
-    const sa = (d.totalTokens / total) * Math.PI * 2;
-    const [c1, c2] = getColors(d.model);
-    const grad = ctx.createConicGradient(angle, cx, cy);
-    grad.addColorStop(0, c1); grad.addColorStop(1, c2);
+  for (var i = 0; i < slices.length; i++) {
+    var d = slices[i];
+    var sa = (d.totalTokens / total) * Math.PI * 2;
+    var c1 = getColors(d.model)[0];
 
     ctx.beginPath();
     ctx.arc(cx, cy, r, angle, angle + sa);
@@ -988,32 +1149,34 @@ function renderModelChart() {
     ctx.fillStyle = c1;
     ctx.fill();
 
-    // Gap between slices
-    ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.strokeStyle = colors.donutGap; ctx.lineWidth = 2; ctx.stroke();
     angle += sa;
-  });
+  }
 
-  ctx.fillStyle = '#0F172A'; ctx.textAlign = 'center';
-  ctx.font = '800 17px Inter, system-ui';
+  ctx.fillStyle = colors.centerText; ctx.textAlign = 'center';
+  ctx.font = "400 17px 'JetBrains Mono', monospace";
   ctx.fillText(fmt(total), cx, cy + 2);
-  ctx.font = '500 10px Inter, system-ui';
-  ctx.fillStyle = '#94A3B8';
+  ctx.font = "500 10px 'IBM Plex Sans', system-ui";
+  ctx.fillStyle = colors.centerSub;
   ctx.fillText('total', cx, cy + 16);
 
-  document.getElementById('modelLegend').innerHTML = slices.map(d => {
-    const pct = ((d.totalTokens / total) * 100).toFixed(1);
-    return `<div class="legend-item">
-      <div class="legend-dot" style="background:${getColors(d.model)[0]}"></div>
-      <span><strong>${modelShort(d.model)}</strong> &ndash; ${fmt(d.totalTokens)} (${pct}%)</span>
-    </div>`;
-  }).join('');
+  var legendHtml = '';
+  for (var i = 0; i < slices.length; i++) {
+    var d = slices[i];
+    var pct = ((d.totalTokens / total) * 100).toFixed(1);
+    legendHtml += '<div class="legend-item">' +
+      '<div class="legend-dot" style="background:' + getColors(d.model)[0] + '"></div>' +
+      '<span><strong>' + modelShort(d.model) + '</strong> &ndash; ' + fmt(d.totalTokens) + ' (' + pct + '%)</span>' +
+      '</div>';
+  }
+  document.getElementById('modelLegend').innerHTML = legendHtml;
 }
 
 // Project accordion
 function toggleProjectDrawer(i) {
-  const row = document.getElementById('proj-row-' + i);
-  const drawer = document.getElementById('proj-drawer-' + i);
-  const isOpen = drawer.classList.contains('open');
+  var row = document.getElementById('proj-row-' + i);
+  var drawer = document.getElementById('proj-drawer-' + i);
+  var isOpen = drawer.classList.contains('open');
   row.classList.toggle('expanded', !isOpen);
   drawer.classList.toggle('open', !isOpen);
 }
@@ -1022,179 +1185,278 @@ function buildDrawerContent(p) {
   if (!p.topPrompts || p.topPrompts.length === 0) {
     return '<div class="drawer-empty">No prompt data available</div>';
   }
-  const items = p.topPrompts.map((pr, i) => {
-    const toolEntries = Object.entries(pr.toolCounts || {}).sort((a, b) => b[1] - a[1]);
-    const chips = toolEntries.map(([name, count]) =>
-      '<span class="tool-chip">' + count + '\u00d7\u00a0' + escapeHtml(name) + '</span>'
-    ).join('') + (pr.continuations > 0 ? '<span class="tool-chip">+' + pr.continuations + ' turns</span>' : '');
-    const badge = '<span class="model-badge ' + modelClass(pr.model) + '"><span class="model-dot"></span>' + modelShort(pr.model) + '</span>';
-    const tokVal = fmt(pr.totalTokens);
-    const tokSub = fmt(pr.inputTokens) + ' / ' + fmt(pr.outputTokens);
-    const promptText = escapeHtml(pr.prompt);
-    const sid = pr.sessionId;
-    return [
-      '<div class="drawer-prompt-row" onclick="openDrilldown(\'' + sid + '\')">',
-      '<div class="drawer-rank">' + (i + 1) + '</div>',
-      '<div>',
-      '<div class="drawer-prompt-text">' + promptText + '</div>',
-      '<div class="drawer-prompt-meta">' + badge + chips + '</div>',
-      '</div>',
-      '<div class="drawer-tokens"><div class="value">' + tokVal + '</div><div class="sub">' + tokSub + '</div></div>',
-      '</div>',
-    ].join('');
-  });
+  var items = [];
+  for (var i = 0; i < p.topPrompts.length; i++) {
+    var pr = p.topPrompts[i];
+    var toolEntries = Object.entries(pr.toolCounts || {}).sort(function(a, b) { return b[1] - a[1]; });
+    var chips = '';
+    for (var j = 0; j < toolEntries.length; j++) {
+      chips += '<span class="tool-chip">' + toolEntries[j][1] + '\u00d7\u00a0' + escapeHtml(toolEntries[j][0]) + '</span>';
+    }
+    if (pr.continuations > 0) chips += '<span class="tool-chip">+' + pr.continuations + ' turns</span>';
+    var badge = '<span class="model-badge ' + modelClass(pr.model) + '"><span class="model-dot"></span>' + modelShort(pr.model) + '</span>';
+    items.push(
+      '<div class="drawer-prompt-row" onclick="openDrilldown(\'' + pr.sessionId + '\')">' +
+      '<div class="drawer-rank">' + (i + 1) + '</div>' +
+      '<div>' +
+      '<div class="drawer-prompt-text">' + escapeHtml(pr.prompt) + '</div>' +
+      '<div class="drawer-prompt-meta">' + badge + chips + '</div>' +
+      '</div>' +
+      '<div class="drawer-tokens"><div class="value">' + fmt(pr.totalTokens) + '</div><div class="sub">' + fmt(pr.inputTokens) + ' / ' + fmt(pr.outputTokens) + '</div></div>' +
+      '</div>'
+    );
+  }
   return '<div class="drawer-prompt-list">' + items.join('') + '</div>';
 }
 
 // Project breakdown
 function renderProjectBreakdown() {
-  const projects = DATA.projectBreakdown;
+  var projects = DATA.projectBreakdown;
   if (!projects || !projects.length) return;
 
-  const countEl = document.getElementById('projectsCount');
-  countEl.textContent = projects.length + ' project' + (projects.length === 1 ? '' : 's');
+  document.getElementById('projectsCount').textContent = projects.length + ' project' + (projects.length === 1 ? '' : 's');
 
-  const maxTokens = projects[0].totalTokens;
-  const chevron = '<svg class="proj-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6l4 4-4 4"/></svg>';
-  const rows = [];
-  projects.forEach((p, i) => {
-    const barPct = (p.totalTokens / maxTokens * 100).toFixed(1);
-    const ariaLabel = p.modelBreakdown.map(m => modelShort(m.model) + ': ' + fmt(m.inputTokens) + ' input, ' + fmt(m.outputTokens) + ' output').join(', ');
-    const pillItems = p.modelBreakdown.map(m =>
-      '<li><span class="model-badge ' + modelClass(m.model) +
-      '" aria-label="' + modelShort(m.model) + ': ' + fmt(m.inputTokens) + ' input, ' + fmt(m.outputTokens) + ' output">' +
-      '<span class="model-dot" aria-hidden="true"></span>' +
-      modelShort(m.model) +
-      ' <span class="token-detail"><span aria-hidden="true">\u2193</span><span class="sr-only">in </span>' + fmt(m.inputTokens) + '</span>' +
-      ' <span class="token-detail"><span aria-hidden="true">\u2191</span><span class="sr-only">out </span>' + fmt(m.outputTokens) + '</span>' +
-      '</span></li>'
-    ).join('');
-    const summaryRow = [
-      '<tr class="proj-row" id="proj-row-' + i + '" onclick="toggleProjectDrawer(' + i + ')">',
-      '<td style="padding:10px 16px">',
-      '<div style="display:flex;align-items:center;gap:6px">',
-      chevron,
-      '<div>',
-      '<div class="proj-name" title="' + projectFull(p.project) + '">' + escapeHtml(projectShort(p.project)) + '</div>',
-      '<ul class="model-pills" aria-label="Models used: ' + ariaLabel + '">' + pillItems + '</ul>',
-      '</div></div></td>',
-      '<td class="token-num" style="font-weight:700;vertical-align:top;padding-top:12px">',
-      '<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">',
-      '<div style="flex:1;max-width:60px;height:3px;background:var(--bg);border-radius:4px;overflow:hidden">',
-      '<div style="width:' + barPct + '%;height:100%;background:var(--indigo);border-radius:4px"></div>',
-      '</div><div><div>' + fmt(p.totalTokens) + '</div><div style="font-size:11px;font-weight:500;color:var(--text-tertiary);margin-top:1px">' + fmt(p.inputTokens) + ' in\u00a0\u00b7\u00a0' + fmt(p.outputTokens) + ' out</div></div></div></td>',
-      '<td class="token-num" style="vertical-align:top;padding-top:12px">' + p.sessionCount + '</td>',
-      '<td class="token-num" style="vertical-align:top;padding-top:12px">' + p.queryCount + '</td>',
-      '</tr>',
-    ].join('');
-    const drawerRow = [
-      '<tr class="proj-drawer" id="proj-drawer-' + i + '">',
-      '<td colspan="4"><div class="proj-drawer-inner"><div class="proj-drawer-content">',
-      buildDrawerContent(p),
-      '</div></div></td></tr>',
-    ].join('');
-    rows.push(summaryRow, drawerRow);
-  });
+  var maxTokens = projects[0].totalTokens;
+  var chevron = '<svg class="proj-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6l4 4-4 4"/></svg>';
+  var rows = [];
+  for (var i = 0; i < projects.length; i++) {
+    var p = projects[i];
+    var barPct = (p.totalTokens / maxTokens * 100).toFixed(1);
+    var ariaLabel = p.modelBreakdown.map(function(m) { return modelShort(m.model) + ': ' + fmt(m.inputTokens) + ' input, ' + fmt(m.outputTokens) + ' output'; }).join(', ');
+    var pillItems = '';
+    for (var j = 0; j < p.modelBreakdown.length; j++) {
+      var m = p.modelBreakdown[j];
+      pillItems += '<li><span class="model-badge ' + modelClass(m.model) +
+        '" aria-label="' + modelShort(m.model) + ': ' + fmt(m.inputTokens) + ' input, ' + fmt(m.outputTokens) + ' output">' +
+        '<span class="model-dot" aria-hidden="true"></span>' +
+        modelShort(m.model) +
+        ' <span class="token-detail"><span aria-hidden="true">\u2193</span><span class="sr-only">in </span>' + fmt(m.inputTokens) + '</span>' +
+        ' <span class="token-detail"><span aria-hidden="true">\u2191</span><span class="sr-only">out </span>' + fmt(m.outputTokens) + '</span>' +
+        '</span></li>';
+    }
+    rows.push(
+      '<tr class="proj-row" id="proj-row-' + i + '" onclick="toggleProjectDrawer(' + i + ')">' +
+      '<td style="padding:10px 16px">' +
+      '<div style="display:flex;align-items:center;gap:6px">' +
+      chevron +
+      '<div>' +
+      '<div class="proj-name" title="' + projectFull(p.project) + '">' + escapeHtml(projectShort(p.project)) + '</div>' +
+      '<ul class="model-pills" aria-label="Models used: ' + ariaLabel + '">' + pillItems + '</ul>' +
+      '</div></div></td>' +
+      '<td class="token-num" style="font-weight:700;vertical-align:top;padding-top:12px">' +
+      '<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">' +
+      '<div style="flex:1;max-width:60px;height:3px;background:var(--bg-surface);border-radius:4px;overflow:hidden">' +
+      '<div style="width:' + barPct + '%;height:100%;background:var(--accent);border-radius:4px"></div>' +
+      '</div><div><div>' + fmt(p.totalTokens) + '</div><div style="font-size:11px;font-weight:500;color:var(--text-tertiary);margin-top:1px">' + fmt(p.inputTokens) + ' in\u00a0\u00b7\u00a0' + fmt(p.outputTokens) + ' out</div></div></div></td>' +
+      '<td class="token-num" style="vertical-align:top;padding-top:12px">' + p.sessionCount + '</td>' +
+      '<td class="token-num" style="vertical-align:top;padding-top:12px">' + p.queryCount + '</td>' +
+      '</tr>'
+    );
+    rows.push(
+      '<tr class="proj-drawer" id="proj-drawer-' + i + '">' +
+      '<td colspan="4"><div class="proj-drawer-inner"><div class="proj-drawer-content">' +
+      buildDrawerContent(p) +
+      '</div></div></td></tr>'
+    );
+  }
   document.getElementById('projectsBody').innerHTML = rows.join('');
 }
 
 // Top prompts
 function renderTopPrompts() {
-  const prompts = DATA.topPrompts;
+  var prompts = DATA.topPrompts;
   if (!prompts.length) return;
-  const maxTokens = prompts[0].totalTokens;
+  var maxTokens = prompts[0].totalTokens;
 
-  document.getElementById('topPromptsList').innerHTML = prompts.map((p, i) => {
-    const inPct = (p.inputTokens / p.totalTokens) * 100;
-    return `<div class="prompt-row" onclick="openDrilldown('${p.sessionId}')">
-      <div class="prompt-rank">${i + 1}</div>
-      <div>
-        <div class="prompt-text">${escapeHtml(p.prompt)}</div>
-        <div class="prompt-meta">${formatDate(p.date)} &middot; ${modelShort(p.model)}</div>
-        <div class="token-bar-wrap" style="width:${Math.max(10, (p.totalTokens / maxTokens) * 100)}%">
-          <div class="token-bar-in" style="width:${inPct}%"></div>
-          <div class="token-bar-out" style="width:${100 - inPct}%"></div>
-        </div>
-      </div>
-      <div class="prompt-tokens">
-        <div class="value">${fmt(p.totalTokens)}</div>
-        <div class="sub">${fmt(p.inputTokens)} read &middot; ${fmt(p.outputTokens)} written</div>
-      </div>
-    </div>`;
-  }).join('');
+  var html = '';
+  for (var i = 0; i < prompts.length; i++) {
+    var p = prompts[i];
+    var inPct = (p.inputTokens / p.totalTokens) * 100;
+    html += '<div class="prompt-row" onclick="openDrilldown(\'' + p.sessionId + '\')">' +
+      '<div class="prompt-rank">' + (i + 1) + '</div>' +
+      '<div>' +
+      '<div class="prompt-text">' + escapeHtml(p.prompt) + '</div>' +
+      '<div class="prompt-meta">' + formatDate(p.date) + ' &middot; ' + modelShort(p.model) + '</div>' +
+      '<div class="token-bar-wrap" style="width:' + Math.max(10, (p.totalTokens / maxTokens) * 100) + '%">' +
+      '<div class="token-bar-in" style="width:' + inPct + '%"></div>' +
+      '<div class="token-bar-out" style="width:' + (100 - inPct) + '%"></div>' +
+      '</div>' +
+      '</div>' +
+      '<div class="prompt-tokens">' +
+      '<div class="value">' + fmt(p.totalTokens) + '</div>' +
+      '<div class="sub">' + fmt(p.inputTokens) + ' read &middot; ' + fmt(p.outputTokens) + ' written</div>' +
+      '</div>' +
+      '</div>';
+  }
+  document.getElementById('topPromptsList').innerHTML = html;
 }
 
 // Sessions
 function renderSessions() {
-  let sessions = [...DATA.sessions];
+  var sessions = DATA.sessions.slice();
   if (searchQuery) {
-    const q = searchQuery.toLowerCase();
-    sessions = sessions.filter(s =>
-      s.firstPrompt.toLowerCase().includes(q) ||
-      s.model.toLowerCase().includes(q) ||
-      projectShort(s.project).toLowerCase().includes(q)
-    );
+    var q = searchQuery.toLowerCase();
+    sessions = sessions.filter(function(s) {
+      return s.firstPrompt.toLowerCase().includes(q) ||
+        s.model.toLowerCase().includes(q) ||
+        projectShort(s.project).toLowerCase().includes(q);
+    });
   }
 
-  const sortFns = {
-    date: (a, b) => (a.timestamp || '').localeCompare(b.timestamp || ''),
-    prompt: (a, b) => a.firstPrompt.localeCompare(b.firstPrompt),
-    model: (a, b) => a.model.localeCompare(b.model),
-    queries: (a, b) => a.queryCount - b.queryCount,
-    total: (a, b) => a.totalTokens - b.totalTokens,
-    input: (a, b) => a.inputTokens - b.inputTokens,
-    output: (a, b) => a.outputTokens - b.outputTokens,
+  var sortFns = {
+    date: function(a, b) { return (a.timestamp || '').localeCompare(b.timestamp || ''); },
+    prompt: function(a, b) { return a.firstPrompt.localeCompare(b.firstPrompt); },
+    model: function(a, b) { return a.model.localeCompare(b.model); },
+    queries: function(a, b) { return a.queryCount - b.queryCount; },
+    total: function(a, b) { return a.totalTokens - b.totalTokens; },
+    input: function(a, b) { return a.inputTokens - b.inputTokens; },
+    output: function(a, b) { return a.outputTokens - b.outputTokens; },
   };
-  const fn = sortFns[currentSort.key] || sortFns.total;
-  sessions.sort((a, b) => currentSort.dir === 'desc' ? fn(b, a) : fn(a, b));
+  var fn = sortFns[currentSort.key] || sortFns.total;
+  sessions.sort(function(a, b) { return currentSort.dir === 'desc' ? fn(b, a) : fn(a, b); });
 
-  document.getElementById('sessionCount').textContent = `${sessions.length} sessions`;
+  document.getElementById('sessionCount').textContent = sessions.length + ' sessions';
 
-  document.getElementById('sessionsBody').innerHTML = sessions.map(s => `
-    <tr onclick="openDrilldown('${s.sessionId}')">
-      <td class="date-cell">
-        ${formatDate(s.date)}
-        <span class="project-tag" title="${escapeHtml(projectShort(s.project))}">${escapeHtml(projectShort(s.project))}</span>
-      </td>
-      <td><div class="prompt-preview" title="${escapeHtml(s.firstPrompt)}">${escapeHtml(s.firstPrompt)}</div></td>
-      <td><span class="model-badge ${modelClass(s.model)}"><span class="model-dot"></span>${modelShort(s.model)}</span></td>
-      <td class="token-num">${s.queryCount}</td>
-      <td class="token-num" style="font-weight:700">${fmt(s.totalTokens)}</td>
-      <td class="token-num">${fmt(s.inputTokens)}</td>
-      <td class="token-num">${fmt(s.outputTokens)}</td>
-    </tr>
-  `).join('');
+  var html = '';
+  for (var i = 0; i < sessions.length; i++) {
+    var s = sessions[i];
+    html += '<tr onclick="openDrilldown(\'' + s.sessionId + '\')">' +
+      '<td class="date-cell">' + formatDate(s.date) +
+      '<span class="project-tag" title="' + escapeHtml(projectShort(s.project)) + '">' + escapeHtml(projectShort(s.project)) + '</span></td>' +
+      '<td><div class="prompt-preview" title="' + escapeHtml(s.firstPrompt) + '">' + escapeHtml(s.firstPrompt) + '</div></td>' +
+      '<td><span class="model-badge ' + modelClass(s.model) + '"><span class="model-dot"></span>' + modelShort(s.model) + '</span></td>' +
+      '<td class="token-num">' + s.queryCount + '</td>' +
+      '<td class="token-num" style="font-weight:700">' + fmt(s.totalTokens) + '</td>' +
+      '<td class="token-num">' + fmt(s.inputTokens) + '</td>' +
+      '<td class="token-num">' + fmt(s.outputTokens) + '</td>' +
+      '</tr>';
+  }
+  document.getElementById('sessionsBody').innerHTML = html;
+}
+
+// Storage
+function fmtBytes(b) {
+  if (b >= 1073741824) return (b / 1073741824).toFixed(2) + ' GB';
+  if (b >= 1048576) return (b / 1048576).toFixed(1) + ' MB';
+  if (b >= 1024) return (b / 1024).toFixed(1) + ' KB';
+  return b + ' B';
+}
+
+function renderStorage() {
+  var storage = DATA.storage;
+  var container = document.getElementById('storageContent');
+  if (!storage || !storage.total) {
+    container.textContent = 'No storage data available.';
+    return;
+  }
+
+  // Note: all values displayed via escapeHtml() or fmtBytes() which only produce safe numeric/alpha strings.
+  // No user-controlled HTML is injected. Category names come from hardcoded directory names in parser.js.
+  // Project names are filesystem directory names passed through escapeHtml() for XSS safety.
+  var barColors = ['var(--accent)', 'var(--teal)', 'var(--indigo)', 'var(--violet)', 'var(--emerald)', 'var(--orange)', 'var(--rose)', 'var(--blue)', 'var(--cyan)', 'var(--amber)'];
+  var treemapColors = ['#D97706', '#14B8A6', '#6366F1', '#8B5CF6', '#10B981', '#F97316', '#F43F5E', '#3B82F6', '#06B6D4', '#D97706'];
+
+  var catBars = '';
+  var maxCat = storage.categories.length > 0 ? storage.categories[0].size : 1;
+  for (var i = 0; i < storage.categories.length; i++) {
+    var c = storage.categories[i];
+    var pct = (c.size / maxCat * 100).toFixed(1);
+    catBars += '<div class="storage-bar-row">' +
+      '<div class="storage-bar-label">' + escapeHtml(c.name) + '/</div>' +
+      '<div class="storage-bar-track"><div class="storage-bar-fill" style="width:' + pct + '%;background:' + barColors[i % barColors.length] + '"></div></div>' +
+      '<div class="storage-bar-size">' + fmtBytes(c.size) + '</div></div>';
+  }
+
+  var maxProj = storage.projects.length > 0 ? storage.projects[0].size : 1;
+  var projRows = '';
+  for (var i = 0; i < Math.min(storage.projects.length, 15); i++) {
+    var p = storage.projects[i];
+    var pct = (p.size / maxProj * 100).toFixed(1);
+    projRows += '<div class="storage-bar-row">' +
+      '<div class="storage-bar-label" title="' + escapeHtml(p.name) + '">' + escapeHtml(projectShort(p.name)) + '</div>' +
+      '<div class="storage-bar-track"><div class="storage-bar-fill" style="width:' + pct + '%;background:' + barColors[i % barColors.length] + '"></div></div>' +
+      '<div class="storage-bar-size">' + fmtBytes(p.size) + '</div></div>';
+  }
+
+  var treeCells = '';
+  var totalForTree = storage.categories.reduce(function(s, c) { return s + c.size; }, 0) || 1;
+  for (var i = 0; i < storage.categories.length; i++) {
+    var c = storage.categories[i];
+    var cols = (c.size / totalForTree) > 0.3 ? 2 : 1;
+    treeCells += '<div class="treemap-cell" style="background:' + treemapColors[i % treemapColors.length] + ';grid-column:span ' + cols + '">' +
+      '<div class="tm-name">' + escapeHtml(c.name) + '/</div>' +
+      '<div class="tm-size">' + fmtBytes(c.size) + ' &middot; ' + c.fileCount + ' files</div></div>';
+  }
+
+  // External locations section
+  // Note: external location names come from hardcoded strings in parser.js, passed through escapeHtml() for safety.
+  // All size values use fmtBytes() which only produces safe numeric strings.
+  var extHtml = '';
+  var extLocs = storage.externalLocations || [];
+  var extTotal = extLocs.reduce(function(s, e) { return s + e.size; }, 0);
+  if (extLocs.length > 0) {
+    var extRows = '';
+    for (var i = 0; i < extLocs.length; i++) {
+      var e = extLocs[i];
+      var extPct = (e.size / Math.max(extLocs[0].size, 1) * 100).toFixed(1);
+      extRows += '<div class="storage-bar-row">' +
+        '<div class="storage-bar-label">' + escapeHtml(e.name) + '</div>' +
+        '<div class="storage-bar-track"><div class="storage-bar-fill" style="width:' + extPct + '%;background:var(--rose)"></div></div>' +
+        '<div class="storage-bar-size">' + fmtBytes(e.size) + '</div></div>';
+    }
+    extHtml = '<div class="storage-bar-card" style="margin-bottom:28px"><h3>External Storage (Desktop App)</h3>' + extRows + '</div>';
+  }
+
+  // Headline: show total footprint, with subtitle breaking down CLI vs external
+  var cliTotal = storage.cliTotal || storage.total;
+  var subtitleParts = [fmtBytes(cliTotal) + ' CLI data'];
+  if (extTotal > 0) subtitleParts.push(fmtBytes(extTotal) + ' Desktop app');
+  var subtitleText = subtitleParts.join(' + ');
+
+  // Build and set — all dynamic values are either escaped strings or numeric formatters.
+  // Category/project names from filesystem are passed through escapeHtml() for XSS safety.
+  var html =
+    '<div class="storage-headline">' + fmtBytes(storage.total) + '</div>' +
+    '<div class="storage-sub">Total Claude Code footprint &mdash; ' + subtitleText + '</div>' +
+    extHtml +
+    '<div class="storage-treemap" style="grid-template-columns:repeat(3,1fr)">' + treeCells + '</div>' +
+    '<div class="storage-grid">' +
+    '<div class="storage-bar-card"><h3>~/.claude By Directory</h3>' + catBars + '</div>' +
+    '<div class="storage-bar-card"><h3>~/.claude By Project</h3>' + (projRows || '<div class="drawer-empty">No project data</div>') + '</div>' +
+    '</div>';
+  container.innerHTML = html;
 }
 
 // Sort
-document.querySelectorAll('.sessions-table th[data-sort]').forEach(th => {
-  th.addEventListener('click', () => {
-    const key = th.dataset.sort;
+document.querySelectorAll('.sessions-table th[data-sort]').forEach(function(th) {
+  th.addEventListener('click', function() {
+    var key = th.dataset.sort;
     if (currentSort.key === key) { currentSort.dir = currentSort.dir === 'desc' ? 'asc' : 'desc'; }
-    else { currentSort = { key, dir: 'desc' }; }
-    document.querySelectorAll('.sessions-table th').forEach(t => t.classList.remove('sorted'));
+    else { currentSort = { key: key, dir: 'desc' }; }
+    document.querySelectorAll('.sessions-table th').forEach(function(t) { t.classList.remove('sorted'); });
     th.classList.add('sorted');
     renderSessions();
   });
 });
 
-document.getElementById('searchInput').addEventListener('input', e => {
+document.getElementById('searchInput').addEventListener('input', function(e) {
   searchQuery = e.target.value;
   renderSessions();
 });
 
-// Drill-down
+// Drill-down modal
 function openDrilldown(sessionId) {
-  const session = DATA.sessions.find(s => s.sessionId === sessionId);
+  var session = DATA.sessions.find(function(s) { return s.sessionId === sessionId; });
   if (!session) return;
 
   document.getElementById('drilldownTitle').textContent = session.firstPrompt.substring(0, 140);
   document.getElementById('drilldownMeta').textContent =
-    `${formatDate(session.date)} \u00B7 ${modelShort(session.model)} \u00B7 ${session.queryCount} messages \u00B7 ${fmt(session.totalTokens)} tokens used`;
+    formatDate(session.date) + ' \u00B7 ' + modelShort(session.model) + ' \u00B7 ' + session.queryCount + ' messages \u00B7 ' + fmt(session.totalTokens) + ' tokens';
 
-  const grouped = [];
-  let current = null;
-  for (const q of session.queries) {
+  var grouped = [];
+  var current = null;
+  for (var i = 0; i < session.queries.length; i++) {
+    var q = session.queries[i];
     if (q.userPrompt) {
       if (current) grouped.push(current);
       current = { prompt: q.userPrompt, inputTokens: q.inputTokens, outputTokens: q.outputTokens, totalTokens: q.totalTokens, continuations: 0 };
@@ -1207,29 +1469,41 @@ function openDrilldown(sessionId) {
   }
   if (current) grouped.push(current);
 
-  document.getElementById('queryList').innerHTML = grouped.map((q, i) => {
-    const cont = q.continuations > 0 ? ` + ${q.continuations} tool uses` : '';
-    return `<div class="query-item">
-      <div class="query-num">${i + 1}</div>
-      <div class="query-prompt">${escapeHtml(q.prompt.substring(0, 500))}</div>
-      <div class="query-tokens-col">
-        <div class="total">${fmt(q.totalTokens)}</div>
-        <div class="detail">${fmt(q.inputTokens)} read / ${fmt(q.outputTokens)} written${cont}</div>
-      </div>
-    </div>`;
-  }).join('');
+  var html = '';
+  for (var i = 0; i < grouped.length; i++) {
+    var q = grouped[i];
+    var cont = q.continuations > 0 ? ' + ' + q.continuations + ' tool uses' : '';
+    html += '<div class="query-item">' +
+      '<div class="query-num">' + (i + 1) + '</div>' +
+      '<div class="query-prompt">' + escapeHtml(q.prompt.substring(0, 500)) + '</div>' +
+      '<div class="query-tokens-col">' +
+      '<div class="total">' + fmt(q.totalTokens) + '</div>' +
+      '<div class="detail">' + fmt(q.inputTokens) + ' read / ' + fmt(q.outputTokens) + ' written' + cont + '</div>' +
+      '</div></div>';
+  }
+  document.getElementById('queryList').innerHTML = html;
 
-  const panel = document.getElementById('drilldown');
-  panel.classList.add('open');
-  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('drilldownOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
 }
 
 function closeDrilldown() {
-  document.getElementById('drilldown').classList.remove('open');
+  document.getElementById('drilldownOverlay').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
+// Close drilldown on Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeDrilldown();
+});
+
 fetchData();
-window.addEventListener('resize', () => { if (DATA) { renderDailyChart(); renderModelChart(); } });
+window.addEventListener('resize', function() {
+  if (DATA) {
+    if (currentTab === 'overview') { renderDailyChart(); renderModelChart(); }
+    updateTabIndicator();
+  }
+});
 </script>
 </body>
 </html>
