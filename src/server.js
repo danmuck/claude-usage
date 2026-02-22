@@ -9,7 +9,12 @@ function createServer() {
   app.get('/api/data', async (req, res) => {
     try {
       if (!cachedData) {
-        cachedData = await require('./parser').parseAllSessions();
+        const parser = require('./parser');
+        const [sessionData, storage] = await Promise.all([
+          parser.parseAllSessions(),
+          parser.calculateStorageMetrics(),
+        ]);
+        cachedData = { ...sessionData, storage };
       }
       res.json(cachedData);
     } catch (err) {
@@ -20,7 +25,12 @@ function createServer() {
   app.get('/api/refresh', async (req, res) => {
     try {
       delete require.cache[require.resolve('./parser')];
-      cachedData = await require('./parser').parseAllSessions();
+      const parser = require('./parser');
+      const [sessionData, storage] = await Promise.all([
+        parser.parseAllSessions(),
+        parser.calculateStorageMetrics(),
+      ]);
+      cachedData = { ...sessionData, storage };
       res.json({ ok: true, sessions: cachedData.sessions.length });
     } catch (err) {
       res.status(500).json({ error: err.message });

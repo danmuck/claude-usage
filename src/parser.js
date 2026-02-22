@@ -7,6 +7,90 @@ function getClaudeDir() {
   return path.join(os.homedir(), '.claude');
 }
 
+// Resolve an encoded project directory name to a real filesystem path.
+// Claude Code encodes paths by replacing /, _, and . with - which is lossy.
+// We resolve by walking path segments and checking what exists on disk.
+// Uses shortest-match-first to avoid greedily consuming hyphens that belong to names.
+function resolveProjectPath(encoded) {
+  let s = encoded.replace(/^-/, '');
+  const parts = s.split('-');
+  let resolved = '/';
+  let i = 0;
+  while (i < parts.length) {
+    // Handle `--` encoding (empty part = dot-prefix or underscore-prefix on next segment)
+    if (parts[i] === '' && i + 1 < parts.length) {
+      // `--foo` encodes `.foo` or `_foo`
+      const next = parts[i + 1];
+      // Try joining more segments for things like `.claude-worktrees`
+      let dotMatched = false;
+      const maxDotLen = Math.min(parts.length - i - 1, 6);
+      for (let len = 1; len <= maxDotLen; len++) {
+        const seg = parts.slice(i + 1, i + 1 + len);
+        const variants = [
+          '.' + seg.join('-'), '.' + seg.join('_'), '.' + seg.join('.'),
+          '_' + seg.join('-'), '_' + seg.join('_'),
+        ];
+        if (len === 1) {
+          variants.unshift('.' + seg[0]);
+          variants.push('_' + seg[0]);
+        }
+        for (const v of variants) {
+          const candidate = path.join(resolved, v);
+          try {
+            if (fs.statSync(candidate).isDirectory()) {
+              resolved = candidate;
+              i += 1 + len;
+              dotMatched = true;
+              break;
+            }
+          } catch(e) {}
+        }
+        if (dotMatched) break;
+      }
+      if (dotMatched) continue;
+      i++; // skip empty part
+      continue;
+    }
+
+    let matched = false;
+    const maxLen = Math.min(parts.length - i, 8);
+    for (let len = 1; len <= maxLen; len++) {
+      // Skip if we'd consume an empty part (belongs to -- handling)
+      if (parts.slice(i, i + len).some((p, idx) => idx > 0 && p === '')) break;
+      const variants = [];
+      const joined = parts.slice(i, i + len);
+      if (len === 1) {
+        variants.push(joined[0]);
+        // Single segment with space variants for paths like "Mobile Documents"
+        variants.push(joined[0]);
+      } else {
+        variants.push(joined.join('-'));
+        variants.push(joined.join('_'));
+        variants.push(joined.join(' '));
+        variants.push(joined.join('.'));
+      }
+      let found = false;
+      for (const v of variants) {
+        const candidate = path.join(resolved, v);
+        try {
+          if (fs.statSync(candidate).isDirectory()) {
+            resolved = candidate;
+            i += len;
+            found = true;
+            break;
+          }
+        } catch(e) {}
+      }
+      if (found) { matched = true; break; }
+    }
+    if (!matched) {
+      resolved = path.join(resolved, parts[i]);
+      i++;
+    }
+  }
+  return resolved;
+}
+
 async function parseJSONLFile(filePath) {
   const lines = [];
   const stream = fs.createReadStream(filePath, { encoding: 'utf-8' });
@@ -109,6 +193,12 @@ async function parseAllSessions() {
   const modelMap = {};
   const allPrompts = []; // for "most expensive prompts" across all sessions
 
+  // Pre-resolve all project paths
+  const resolvedPaths = {};
+  for (const projectDir of projectDirs) {
+    resolvedPaths[projectDir] = resolveProjectPath(projectDir);
+  }
+
   for (const projectDir of projectDirs) {
     const dir = path.join(projectsDir, projectDir);
     const files = fs.readdirSync(dir).filter(f => f.endsWith('.jsonl'));
@@ -136,7 +226,9 @@ async function parseAllSessions() {
       const totalTokens = inputTokens + outputTokens;
 
       const firstTimestamp = entries.find(e => e.timestamp)?.timestamp;
-      const date = firstTimestamp ? firstTimestamp.split('T')[0] : 'unknown';
+      const date = firstTimestamp
+        ? new Date(firstTimestamp).toLocaleDateString('en-CA', { timeZone: 'America/New_York' })
+        : 'unknown';
 
       // Primary model
       const modelCounts = {};
@@ -181,6 +273,7 @@ async function parseAllSessions() {
       sessions.push({
         sessionId,
         project: projectDir,
+        projectPath: resolvedPaths[projectDir],
         date,
         timestamp: firstTimestamp,
         firstPrompt: firstPrompt.substring(0, 200),
@@ -227,6 +320,7 @@ async function parseAllSessions() {
     if (!projectMap[proj]) {
       projectMap[proj] = {
         project: proj,
+        projectPath: session.projectPath,
         inputTokens: 0, outputTokens: 0, totalTokens: 0,
         sessionCount: 0, queryCount: 0,
         modelMap: {},
@@ -290,6 +384,7 @@ async function parseAllSessions() {
 
   const projectBreakdown = Object.values(projectMap).map(p => ({
     project: p.project,
+    projectPath: p.projectPath,
     inputTokens: p.inputTokens,
     outputTokens: p.outputTokens,
     totalTokens: p.totalTokens,
@@ -413,13 +508,12 @@ function generateInsights(sessions, allPrompts, totals) {
     for (const s of sessions) {
       if (!s.timestamp) continue;
       const d = new Date(s.timestamp);
-      const day = d.getDay();
-      if (!dayOfWeekMap[day]) dayOfWeekMap[day] = { tokens: 0, sessions: 0 };
-      dayOfWeekMap[day].tokens += s.totalTokens;
-      dayOfWeekMap[day].sessions += 1;
+      const dayName = d.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'America/New_York' });
+      if (!dayOfWeekMap[dayName]) dayOfWeekMap[dayName] = { tokens: 0, sessions: 0 };
+      dayOfWeekMap[dayName].tokens += s.totalTokens;
+      dayOfWeekMap[dayName].sessions += 1;
     }
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const days = Object.entries(dayOfWeekMap).map(([d, v]) => ({ day: dayNames[d], ...v, avg: v.tokens / v.sessions }));
+    const days = Object.entries(dayOfWeekMap).map(([day, v]) => ({ day, ...v, avg: v.tokens / v.sessions }));
     if (days.length >= 3) {
       days.sort((a, b) => b.avg - a.avg);
       const busiest = days[0];
@@ -477,16 +571,19 @@ function generateInsights(sessions, allPrompts, totals) {
   // 8. One project dominates usage
   if (sessions.length >= 5) {
     const projectTokens = {};
+    const projectPaths = {};
     for (const s of sessions) {
       const proj = s.project || 'unknown';
       projectTokens[proj] = (projectTokens[proj] || 0) + s.totalTokens;
+      if (s.projectPath) projectPaths[proj] = s.projectPath;
     }
     const sorted = Object.entries(projectTokens).sort((a, b) => b[1] - a[1]);
     if (sorted.length >= 2) {
       const [topProject, topTokens] = sorted[0];
       const pct = ((topTokens / Math.max(totals.totalTokens, 1)) * 100).toFixed(0);
       if (pct >= 60) {
-        const projName = topProject.replace(/^C--Users-[^-]+-?/, '').replace(/^Projects-?/, '').replace(/-/g, '/') || '~';
+        const fullPath = projectPaths[topProject] || topProject;
+        const projName = fullPath.replace(/^\//, '').replace(/^(?:Users|home)\/[^/]+\//, '').replace(/^(?:Projects|local)\//, '') || '~';
         insights.push({
           id: 'project-dominance',
           type: 'info',
